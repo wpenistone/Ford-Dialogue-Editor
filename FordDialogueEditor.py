@@ -921,83 +921,6 @@ class GraphicsEdge(QGraphicsItem):
                     "Edge context menu couldn't find editor reference to delete."
                 )
 
-class VisualGroupRegion(QGraphicsRectItem):
-    def __init__(
-        self,
-        pos: QPointF,
-        size: QSizeF,
-        label: str,
-        color: QColor,
-        editor: "DialogueEditor",
-    ):
-        super().__init__(QRectF(pos, size))
-        self.editor = editor
-        self.label = label
-        self.color = color
-        self.setPen(QPen(Qt.GlobalColor.gray, 1, Qt.PenStyle.DashLine))
-        self.setBrush(QBrush(self.color))
-        self.setZValue(-1)  
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
-
-        self.label_item = QGraphicsTextItem(self.label, self)
-        self.label_item.setDefaultTextColor(config.VISUAL_GROUP_TEXT_COLOR)
-        self.label_item.setPos(self.rect().topLeft() + QPointF(5, 5))
-
-    def paint(
-        self,
-        painter: QPainter,
-        option: QStyleOptionGraphicsItem,
-        widget: Optional[QWidget] = None,
-    ):
-
-        if self.isSelected():
-            selected_color = config.VISUAL_GROUP_SELECTED_COLOR
-            self.setBrush(QBrush(selected_color))
-            self.setPen(QPen(Qt.GlobalColor.white, 1.5, Qt.PenStyle.SolidLine))
-        else:
-            self.setBrush(QBrush(self.color))
-            self.setPen(QPen(Qt.GlobalColor.gray, 1, Qt.PenStyle.DashLine))
-
-        super().paint(painter, option, widget)
-
-    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
-
-        if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
-            self.editor._mark_unsaved()  
-        return super().itemChange(change, value)
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            "pos": [self.pos().x(), self.pos().y()],
-            "size": [self.rect().width(), self.rect().height()],
-            "label": self.label,
-            "color": [
-                self.color.red(),
-                self.color.green(),
-                self.color.blue(),
-                self.color.alpha(),
-            ],
-        }
-
-    @classmethod
-    def from_dict(
-        cls, data: Dict[str, Any], editor: "DialogueEditor"
-    ) -> Optional["VisualGroupRegion"]:
-        try:
-            pos = QPointF(data["pos"][0], data["pos"][1])
-            size = QSizeF(data["size"][0], data["size"][1])
-            label = data["label"]
-            color_data = data["color"]
-            color = QColor(color_data[0], color_data[1], color_data[2], color_data[3])
-            return cls(pos, size, label, color, editor)
-        except (KeyError, IndexError, TypeError) as e:
-            logging.error(
-                f"Failed to create VisualGroupRegion from dict: {data}, Error: {e}"
-            )
-            return None
-
 class ZoomPanGraphicsView(QGraphicsView):
     edgeDragStarted = pyqtSignal(GraphicsNode, QPointF)
     edgeDragMoved = pyqtSignal(QPointF)
@@ -2519,7 +2442,6 @@ class DialogueEditor(QMainWindow):
         self.nodes_data: Dict[str, DialogueNodeData] = {}
         self.graphics_nodes: Dict[str, GraphicsNode] = {}
         self.graphics_edges: List[GraphicsEdge] = []
-        self.visual_groups: List[VisualGroupRegion] = []  
         self.bookmarks: Set[str] = set()  
         self.clipboard: List[Dict] = []  
         self.choices_list: Optional[ClickAwareListWidget] = None
@@ -4983,18 +4905,6 @@ class DialogueEditor(QMainWindow):
         except RuntimeError:
             return []
 
-    def get_selected_visual_groups(self) -> List[VisualGroupRegion]:
-        if not self.scene:
-            return []
-        try:
-            return [
-                item
-                for item in self.scene.selectedItems()
-                if isinstance(item, VisualGroupRegion)
-            ]
-        except RuntimeError:
-            return []
-
     def get_default_character_for_new_node(self) -> str:
         selected = self.get_selected_node()
         if selected and selected.node_data.character:
@@ -5628,8 +5538,6 @@ class DialogueEditor(QMainWindow):
             for item in items_to_remove:
                 if isinstance(item, GraphicsEdge):
                     self.remove_edge_object(item)
-                elif isinstance(item, VisualGroupRegion) and item in self.visual_groups:
-                    self.visual_groups.remove(item)  
                 elif item in self.scene.items():  
                     try:
                         self.scene.removeItem(item)
