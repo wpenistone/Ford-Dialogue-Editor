@@ -4290,11 +4290,7 @@ class DialogueEditor(QMainWindow):
         if not target_id:
             return
 
-        if target_id == node_id:
-            QMessageBox.warning(
-                self, "Invalid Target", "Node cannot link to itself using 'Next'."
-            )
-            return
+
 
         cmd = SetNextNodeCommand(node_id, target_id, self)
         self.undo_stack.push(cmd)
@@ -4565,11 +4561,6 @@ class DialogueEditor(QMainWindow):
                 "Select New Target Node", current_target=original_target_id
             )
             if not new_target_id:
-                return
-            if new_target_id == selected_node.node_data.id:
-                QMessageBox.warning(
-                    self, "Invalid Target", "Node cannot link to itself using a choice."
-                )
                 return
 
             preset_names = list(config.PRESETS.keys())
