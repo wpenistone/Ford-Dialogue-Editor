@@ -57,7 +57,6 @@ PROJECT_KEY_MAP = {
     "custom_data": "custom_data", # Key for the dictionary holding ALL custom properties
     # Editor Specific Data
     "bookmarks": "bookmarks",         # Key for the list of bookmarked node IDs
-    "visual_groups": "visual_groups"  # Key for the list of visual group data dicts
 }
 # Automatically create the reverse mapping for loading project files
 PROJECT_REVERSE_KEY_MAP = {v: k for k, v in PROJECT_KEY_MAP.items()}
@@ -115,11 +114,6 @@ NODE_BOOKMARK_BORDER_COLOR = QColor(255, 215, 0, 200) # Gold, slightly transpare
 NODE_HIGHLIGHT_OUTLINE_COLOR = QColor(0, 255, 0, 220) # Bright green outline for path highlighting
 NODE_HIGHLIGHT_FILL_ALPHA = 30               # Slightly fill highlighted nodes with outline color
 NODE_FIND_HIGHLIGHT_COLOR = QColor(0, 191, 255, 220) # Deep sky blue outline for find results
-
-VISUAL_GROUP_DEFAULT_COLOR = QColor(70, 70, 70, 100)   # Semi-transparent dark gray for visual groups
-VISUAL_GROUP_SELECTED_COLOR = QColor(90, 90, 90, 150)  # Slightly lighter/more opaque when selected
-VISUAL_GROUP_TEXT_COLOR = QColor(200, 200, 200)    # Text color for group labels
-
 FOCUS_FLASH_COLOR = QColor(255, 255, 153, 200) # Yellowish flash when focusing node
 NEXT_LINK_TEXT_COLOR = QColor("#7FFFD4")       # Aquamarine for "[NEXT] -> ..." in properties list
 DEFAULT_CHOICE_TEXT_COLOR = QColor(230, 230, 230) # Standard text color for choices in properties list
@@ -164,8 +158,6 @@ VIEW_FIT_PADDING_X = 100.0                 # Padding added around content when f
 VIEW_FIT_PADDING_Y = 100.0
 DEFAULT_NODE_POS_OFFSET = QPointF(0, NODE_HEIGHT + NODE_V_SPACING) # Default offset for new nodes created via connection dialog (below source)
 DEFAULT_PASTE_OFFSET = QPointF(30, 30)     # Offset applied when pasting nodes
-DEFAULT_GROUP_SIZE = QSizeF(NODE_WIDTH * 2 + LAYOUT_NODE_H_GAP, NODE_HEIGHT * 2 + LAYOUT_LAYER_V_GAP) # Initial size for new visual groups
-
 # --- Behavior ---
 FOCUS_FLASH_DURATION_MS = 350
 TEXT_EDIT_SAVE_DELAY_MS = 600              # Debounce delay (ms) for text edits before saving to undo stack
