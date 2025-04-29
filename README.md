@@ -30,7 +30,6 @@ A visual editor for creating and managing node-based branching dialogues, built 
     *   Define and edit custom properties for nodes (configurable in `config.py`).
 *   **Graph Organization & Navigation:**
     *   **Bookmarks:** Add/remove bookmarks for important nodes via context menu or `View -> Bookmarks` menu for quick navigation. Bookmarked nodes have a visual indicator.
-    *   **Visual Groups:** Create labeled, colored background rectangles (Right-click canvas -> "Add Visual Group Here") to visually organize sections of your graph. Saved with the project.
     *   **Path Highlighting:** Right-click node -> "Highlight Outgoing/Incoming Path" to visualize node reachability (ignores loops back to start). Clear highlights via `View -> Clear Highlights` or `Esc`.
     *   **Find:** "Find Node" functionality (`Ctrl+F`) to search by ID, Character, or Text. Highlights all matching nodes and connected edges. Use "Find Next" (`Ctrl+G`) to cycle focus through results.
     *   Pan the scene using middle-mouse drag.
@@ -39,13 +38,13 @@ A visual editor for creating and managing node-based branching dialogues, built 
     *   Automatic focus flash on nodes when jumped to via search, list click, or bookmarks.
 *   **Editing Utilities:**
     *   **Copy/Paste Nodes:** Copy selected nodes (`Ctrl+C`) and paste them (`Ctrl+V`) onto the canvas. Pasted nodes get new unique IDs and have connections cleared. Relative positions are maintained.
-    *   **Undo/Redo:** Robust Undo/Redo system (`Ctrl+Z` / `Ctrl+Y`) for most actions (node/edge/group/bookmark add/delete, property changes, moves, linking, layout).
+    *   **Undo/Redo:** Robust Undo/Redo system (`Ctrl+Z` / `Ctrl+Y`) for most actions (node/edge/bookmark add/delete, property changes, moves, linking, layout).
 *   **Layout:**
     *   Apply an automatic Sugiyama-based layered graph layout (`Ctrl+R`) to arrange nodes based on connections.
 *   **Validation:**
     *   Run `File -> Validate Dialogue...` to check for common issues like orphan nodes, dead ends, dangling links (to non-existent nodes), and optionally empty text/character fields. Results shown in a clickable list.
 *   **Data Management:**
-    *   Save/Load projects in a dedicated `.dveditor` JSON format (includes node data, positions, connections, bookmarks, visual groups).
+    *   Save/Load projects in a dedicated `.dveditor` JSON format (includes node data, positions, connections, bookmarks).
     *   Import/Export dialogues to/from a game-specific JSON format (structure highly configurable via `config.py`).
     *   Automatic prompts to save unsaved changes on exit or load.
 *   **Configuration (`config.py`):**
@@ -95,7 +94,7 @@ A visual editor for creating and managing node-based branching dialogues, built 
     *   Use the `Edit -> Add Node` menu item (`Ctrl+N`).
     *   A default "start" node is created if the editor is launched empty.
 3.  **Selecting:**
-    *   Click on a node, edge, or visual group to select it.
+    *   Click on a node or edge to select it.
     *   Hold `Ctrl` and click to select multiple items.
     *   Drag a selection box to select multiple items.
 4.  **Editing Properties:**
@@ -115,7 +114,6 @@ A visual editor for creating and managing node-based branching dialogues, built 
     *   The start node is often automatically renamed to `start` (configurable via `START_NODE_EXPORT_ID`) for export compatibility. You'll be prompted if a rename is needed for export.
 7.  **Organizing:**
     *   Use **Bookmarks** (`View` menu or Node context menu) for quick access to key nodes.
-    *   Use **Visual Groups** (Canvas context menu) to visually section your graph. Select groups to move them. Delete via context menu.
     *   Use **Path Highlighting** (Node context menu) to understand flow.
 8.  **Saving/Loading/Import/Export:**
     *   Use the `File` menu to Save/Load `.dveditor` project files (preserves all editor state).
@@ -130,9 +128,9 @@ A visual editor for creating and managing node-based branching dialogues, built 
 This file allows extensive customization:
 
 *   **`ALLOWED_CUSTOM_PROPERTIES`:** Define data fields (name, type, default) specific to your needs that should appear in the properties panel.
-*   **`PROJECT_KEY_MAP`:** Controls the JSON keys used when saving/loading the internal `.dveditor` project file (includes editor-specific keys like bookmarks/groups).
+*   **`PROJECT_KEY_MAP`:** Controls the JSON keys used when saving/loading the internal `.dveditor` project file (includes editor-specific keys like bookmarks).
 *   **`GAME_KEY_MAP`:** **Crucial for integration.** Defines how internal concepts (like `node_id`, `choices`, `next_node`, custom properties) map to the specific keys expected by your game's JSON dialogue format during import/export. Modify this carefully to match your target format.
-*   **Colors & Dimensions:** Change the visual appearance of nodes, edges, highlights, groups, scene, etc.
+*   **Colors & Dimensions:** Change the visual appearance of nodes, edges, highlights, scene, etc.
 *   **`NODE_COLORING_RULES`:** Define specific colors for nodes based on the character name field.
 *   **Presets:** Define common choice types (e.g., "Accept", "Decline") with associated data (like icons or sounds) that can be added during export based on the preset selected for a choice.
 *   **Validation Settings:** Enable/disable specific checks performed by the validator.
@@ -142,7 +140,7 @@ This file allows extensive customization:
 
 ## File Formats
 
-*   **`.dveditor` (Project File):** A JSON file storing the complete state of the editor graph, including node data, positions, custom properties, connections, bookmarks, and visual groups. Designed for saving and resuming work within the editor. Structure defined by `PROJECT_KEY_MAP`.
+*   **`.dveditor` (Project File):** A JSON file storing the complete state of the editor graph, including node data, positions, custom properties, connections, and bookmarks. Designed for saving and resuming work within the editor. Structure defined by `PROJECT_KEY_MAP`.
 *   **JSON (Import/Export):** A JSON file formatted according to a specific dialogue system requirements. The structure is defined by `GAME_KEY_MAP` in `config.py`. You **must** configure `GAME_KEY_MAP` correctly for import/export to work with your target system.
 
 ## Contributing
