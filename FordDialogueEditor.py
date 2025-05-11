@@ -12,7 +12,8 @@ import traceback
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+    format=
+    "%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
@@ -88,6 +89,7 @@ from PyQt6.QtCore import (
     QItemSelectionModel,
 )
 
+
 def count_crossings_between_nodes(
     u: str,
     v: str,
@@ -99,13 +101,11 @@ def count_crossings_between_nodes(
     crossing_count = 0
     target_layer_nodes = nodes_at_level.get(target_layer_idx, [])
     neighbors_u = [
-        n
-        for n in adj_or_rev_adj.get(u, [])
+        n for n in adj_or_rev_adj.get(u, [])
         if n in node_order_indices and n in target_layer_nodes
     ]
     neighbors_v = [
-        n
-        for n in adj_or_rev_adj.get(v, [])
+        n for n in adj_or_rev_adj.get(v, [])
         if n in node_order_indices and n in target_layer_nodes
     ]
     if not neighbors_u or not neighbors_v:
@@ -118,14 +118,19 @@ def count_crossings_between_nodes(
                 crossing_count += 1
     return crossing_count
 
+
 class BaseUndoCommand(QUndoCommand):
-    def __init__(
-        self, editor: "DialogueEditor", text: str = "", parent: Optional[QObject] = None
-    ):
+
+    def __init__(self,
+                 editor: "DialogueEditor",
+                 text: str = "",
+                 parent: Optional[QObject] = None):
         super().__init__(text, parent)
         self.editor = editor
 
+
 class SetCustomPropertyCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -135,8 +140,10 @@ class SetCustomPropertyCommand(BaseUndoCommand):
         editor: "DialogueEditor",
         parent: Optional[QObject] = None,
     ):
-        display_name = config.ALLOWED_CUSTOM_PROPERTIES.get(key, {}).get("display", key)
-        super().__init__(editor, f"Set Prop '{display_name}' for '{node_id}'", parent)
+        display_name = config.ALLOWED_CUSTOM_PROPERTIES.get(key, {}).get(
+            "display", key)
+        super().__init__(editor, f"Set Prop '{display_name}' for '{node_id}'",
+                         parent)
         self.node_id = node_id
         self.key = key
         self.old_value = old_value
@@ -169,8 +176,7 @@ class SetCustomPropertyCommand(BaseUndoCommand):
                             converted_value = False
                         else:
                             raise ValueError(
-                                f"Invalid boolean string: '{value_to_set}'"
-                            )
+                                f"Invalid boolean string: '{value_to_set}'")
             except (ValueError, TypeError) as e:
                 logging.warning(
                     f"Type conversion failed for custom prop '{self.key}' (node '{self.node_id}', value '{value_to_set}', expected '{expected_type_str}'): {e}. Storing as string."
@@ -186,7 +192,8 @@ class SetCustomPropertyCommand(BaseUndoCommand):
                     widget.blockSignals(True)
                     widget.setText(str(converted_value))
                     widget.blockSignals(False)
-                    self.editor._original_custom_props[self.key] = str(converted_value)
+                    self.editor._original_custom_props[self.key] = str(
+                        converted_value)
                 else:
                     self.editor.update_properties_panel()
 
@@ -211,7 +218,9 @@ class SetCustomPropertyCommand(BaseUndoCommand):
                 f"Undo failed for SetCustomPropertyCommand ({self.node_id}, {self.key})"
             )
 
+
 class DialogueNodeData:
+
     def __init__(
         self,
         node_id: str = "new_node",
@@ -229,7 +238,8 @@ class DialogueNodeData:
         self.is_start_node: bool = bool(is_start)
         self.custom_data: Dict[str, Any] = {}
 
-        for internal_key, prop_config in config.ALLOWED_CUSTOM_PROPERTIES.items():
+        for internal_key, prop_config in config.ALLOWED_CUSTOM_PROPERTIES.items(
+        ):
             default_value = prop_config.get("default", "")
             expected_type_str = prop_config.get("type", "string").lower()
             value_to_use = default_value
@@ -286,7 +296,8 @@ class DialogueNodeData:
             key_map.get("id", "id"): self.id,
             key_map.get("character", "character"): self.character,
             key_map.get("text", "text"): self.text,
-            key_map.get("pos", "pos"): [self.pos.x(), self.pos.y()],
+            key_map.get("pos", "pos"): [self.pos.x(),
+                                        self.pos.y()],
             key_map.get("is_start_node", "is_start_node"): self.is_start_node,
             key_map.get("custom_data", "custom_data"): self.custom_data.copy(),
         }
@@ -301,18 +312,18 @@ class DialogueNodeData:
         if not isinstance(data, dict):
             raise ValueError("Node data must be a dictionary")
         rev_map = config.PROJECT_REVERSE_KEY_MAP
-        node_id = str(data.get(rev_map.get("id", "id"), f"error_id_{id(data)}"))
+        node_id = str(data.get(rev_map.get("id", "id"),
+                               f"error_id_{id(data)}"))
         character = str(data.get(rev_map.get("character", "character"), ""))
         text = str(data.get(rev_map.get("text", "text"), ""))
         pos_data = data.get(rev_map.get("pos", "pos"))
-        is_start = bool(data.get(rev_map.get("is_start_node", "is_start_node"), False))
+        is_start = bool(
+            data.get(rev_map.get("is_start_node", "is_start_node"), False))
         loaded_custom_data_dict = data.get(
-            rev_map.get("custom_data", "custom_data"), {}
-        )
+            rev_map.get("custom_data", "custom_data"), {})
         if not isinstance(loaded_custom_data_dict, dict):
             logging.warning(
-                f"Invalid custom_data format for node '{node_id}'. Resetting."
-            )
+                f"Invalid custom_data format for node '{node_id}'. Resetting.")
             loaded_custom_data_dict = {}
 
         node = cls(
@@ -364,7 +375,9 @@ class DialogueNodeData:
 
         return node
 
+
 class GraphicsNode(QGraphicsItem):
+
     def __init__(self, node_data: DialogueNodeData, editor: "DialogueEditor"):
         super().__init__()
         self.node_data = node_data
@@ -378,7 +391,8 @@ class GraphicsNode(QGraphicsItem):
         self._flash_timer.timeout.connect(self._stop_flash)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsSelectable, True)
-        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges, True)
+        self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemSendsGeometryChanges,
+                     True)
         self.setCacheMode(QGraphicsItem.CacheMode.DeviceCoordinateCache)
         self.setZValue(1)
         self.edges: List[GraphicsEdge] = []
@@ -387,13 +401,12 @@ class GraphicsNode(QGraphicsItem):
         self._is_path_highlighted_incoming = False
         self._is_find_highlighted = False
         self._is_bookmarked = False
-        self._base_color_override = None  
+        self._base_color_override = None
 
     def update_dynamic_visuals(self):
         self._is_bookmarked = self.node_data.id in self.editor.bookmarks
         self._base_color_override = config.NODE_COLORING_RULES.get(
-            self.node_data.character
-        )
+            self.node_data.character)
         self.update()
 
     def set_path_highlight_outgoing(self, highlighted: bool):
@@ -416,9 +429,8 @@ class GraphicsNode(QGraphicsItem):
 
     def boundingRect(self) -> QRectF:
         extra = config.HIGHLIGHT_PEN_WIDTH + config.NODE_BOOKMARK_BORDER_WIDTH
-        return QRectF(0, 0, self.width, self.height).adjusted(
-            -extra, -extra, extra, extra
-        )
+        return QRectF(0, 0, self.width,
+                      self.height).adjusted(-extra, -extra, extra, extra)
 
     def is_logically_end_node(self) -> bool:
         if not hasattr(self, "node_data"):
@@ -426,11 +438,8 @@ class GraphicsNode(QGraphicsItem):
         return not self.node_data.next_node and not self.node_data.choices
 
     def links_to_start(self) -> Tuple[bool, int, int]:
-        if (
-            not hasattr(self, "editor")
-            or not self.editor.start_node_id
-            or not hasattr(self, "node_data")
-        ):
+        if (not hasattr(self, "editor") or not self.editor.start_node_id
+                or not hasattr(self, "node_data")):
             return (False, 0, 0)
         start_id = self.editor.start_node_id
         loop_link_count = 0
@@ -453,7 +462,8 @@ class GraphicsNode(QGraphicsItem):
         normal_color = getattr(config, "NODE_NORMAL_COLOR", QColor(60, 60, 90))
         start_color = getattr(config, "NODE_START_COLOR", QColor(0, 100, 0))
         end_color = getattr(config, "NODE_END_COLOR", QColor(100, 0, 0))
-        loop_base_color = getattr(config, "NODE_LOOP_COLOR", QColor(100, 100, 0))
+        loop_base_color = getattr(config, "NODE_LOOP_COLOR",
+                                  QColor(100, 100, 0))
 
         base_color = normal_color
         try:
@@ -462,21 +472,20 @@ class GraphicsNode(QGraphicsItem):
             if self.node_data.is_start_node:
                 base_color = start_color
             else:
-                is_explicit_loop, loop_count, total_count = self.links_to_start()
+                is_explicit_loop, loop_count, total_count = self.links_to_start(
+                )
                 if is_explicit_loop:
                     if total_count > 0:
                         loop_ratio = loop_count / total_count
                         h, s, v, a = loop_base_color.getHsv()
                         new_saturation = max(0, min(255, int(s * loop_ratio)))
-                        adjusted_color = QColor.fromHsv(h, new_saturation, v, a)
+                        adjusted_color = QColor.fromHsv(
+                            h, new_saturation, v, a)
                         base_color = adjusted_color
                     else:
                         base_color = loop_base_color
-                elif (
-                    self.is_logically_end_node()
-                    and self.editor
-                    and self.editor.start_node_id
-                ):
+                elif (self.is_logically_end_node() and self.editor
+                      and self.editor.start_node_id):
                     base_color = loop_base_color
                 elif self.is_logically_end_node():
                     base_color = end_color
@@ -489,7 +498,8 @@ class GraphicsNode(QGraphicsItem):
                 f"Error in get_base_color for node '{getattr(self.node_data, 'id', 'UNKNOWN')}': {e}"
             )
 
-        return QColor(base_color) if not isinstance(base_color, QColor) else base_color
+        return QColor(base_color) if not isinstance(base_color,
+                                                    QColor) else base_color
 
     def paint(
         self,
@@ -503,18 +513,20 @@ class GraphicsNode(QGraphicsItem):
         brush_color = current_color
 
         if self.isSelected() and not self._is_flashing:
-            brightness_factor = getattr(config, "NODE_SELECTED_BRIGHTNESS", 130)
+            brightness_factor = getattr(config, "NODE_SELECTED_BRIGHTNESS",
+                                        130)
             try:
                 brush_color = base_color.lighter(brightness_factor)
             except AttributeError:
                 brush_color = QColor(Qt.GlobalColor.magenta)
-                logging.error(f"Node {self.node_data.id} base_color was not a QColor.")
+                logging.error(
+                    f"Node {self.node_data.id} base_color was not a QColor.")
 
         painter.setBrush(QBrush(brush_color))
 
         default_pen = QPen(
-            Qt.GlobalColor.white if self.isSelected() else Qt.GlobalColor.darkGray, 1.5
-        )
+            Qt.GlobalColor.white
+            if self.isSelected() else Qt.GlobalColor.darkGray, 1.5)
         painter.setPen(default_pen)
 
         if self._is_path_highlighted_outgoing or self._is_path_highlighted_incoming:
@@ -535,17 +547,13 @@ class GraphicsNode(QGraphicsItem):
             )
             painter.setPen(highlight_pen)
             highlight_fill = QColor(config.NODE_FIND_HIGHLIGHT_COLOR)
-            highlight_fill.setAlpha(
-                config.NODE_HIGHLIGHT_FILL_ALPHA + 20
-            )  
+            highlight_fill.setAlpha(config.NODE_HIGHLIGHT_FILL_ALPHA + 20)
             painter.setBrush(highlight_fill)
         else:
-            painter.setBrush(
-                QBrush(brush_color)
-            )  
+            painter.setBrush(QBrush(brush_color))
 
         painter.drawRoundedRect(rect, 5.0, 5.0)
-        painter.setBrush(Qt.BrushStyle.NoBrush)  
+        painter.setBrush(Qt.BrushStyle.NoBrush)
 
         if self._is_bookmarked:
             bookmark_pen = QPen(
@@ -556,18 +564,16 @@ class GraphicsNode(QGraphicsItem):
             painter.setPen(bookmark_pen)
             adjust = config.NODE_BOOKMARK_BORDER_WIDTH / 2
             painter.drawRoundedRect(
-                rect.adjusted(adjust, adjust, -adjust, -adjust), 4.0, 4.0
-            )
+                rect.adjusted(adjust, adjust, -adjust, -adjust), 4.0, 4.0)
 
         text_margin = 5.0
         id_height = 20.0
         char_height = 15.0
-        id_rect = QRectF(
-            text_margin, text_margin, self.width - 2 * text_margin, id_height
-        )
-        char_rect = QRectF(
-            text_margin, id_rect.bottom() + 2, self.width - 2 * text_margin, char_height
-        )
+        id_rect = QRectF(text_margin, text_margin,
+                         self.width - 2 * text_margin, id_height)
+        char_rect = QRectF(text_margin,
+                           id_rect.bottom() + 2, self.width - 2 * text_margin,
+                           char_height)
         text_rect = QRectF(
             text_margin,
             char_rect.bottom() + 5,
@@ -576,7 +582,8 @@ class GraphicsNode(QGraphicsItem):
         )
 
         painter.setPen(QPen(config.NODE_TEXT_COLOR))
-        painter.drawText(id_rect, Qt.AlignmentFlag.AlignCenter, self.node_data.id)
+        painter.drawText(id_rect, Qt.AlignmentFlag.AlignCenter,
+                         self.node_data.id)
         char_preview = f"Char: {self.node_data.character[:15]}{'...' if len(self.node_data.character) > 15 else ''}"
         painter.drawText(
             char_rect,
@@ -587,11 +594,8 @@ class GraphicsNode(QGraphicsItem):
         painter.setPen(QPen(config.NODE_TEXT_COLOR))
         cleaned_text = self.node_data.text.replace("\n", " ")
         preview_len = 35
-        preview = (
-            cleaned_text[:preview_len] + "..."
-            if len(cleaned_text) > preview_len
-            else cleaned_text
-        )
+        preview = (cleaned_text[:preview_len] +
+                   "..." if len(cleaned_text) > preview_len else cleaned_text)
         painter.drawText(
             text_rect,
             Qt.AlignmentFlag.AlignLeft
@@ -600,11 +604,10 @@ class GraphicsNode(QGraphicsItem):
             preview,
         )
 
-    def itemChange(self, change: QGraphicsItem.GraphicsItemChange, value: Any) -> Any:
-        if (
-            change == QGraphicsItem.GraphicsItemChange.ItemPositionChange
-            and self.scene()
-        ):
+    def itemChange(self, change: QGraphicsItem.GraphicsItemChange,
+                   value: Any) -> Any:
+        if (change == QGraphicsItem.GraphicsItemChange.ItemPositionChange
+                and self.scene()):
             if self._move_start_pos is None:
                 self._move_start_pos = self.pos()
         elif change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
@@ -645,7 +648,7 @@ class GraphicsNode(QGraphicsItem):
         highlight_incoming_action = menu.addAction("Highlight Incoming Path")
         clear_highlight_action = menu.addAction("Clear Highlights")
         menu.addSeparator()
-        copy_action = menu.addAction("Copy Node(s)")  
+        copy_action = menu.addAction("Copy Node(s)")
 
         action = menu.exec(event.screenPos())
 
@@ -683,21 +686,18 @@ class GraphicsNode(QGraphicsItem):
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         super().mouseReleaseEvent(event)
-        if (
-            event.button() == Qt.MouseButton.LeftButton
-            and self._move_start_pos is not None
-        ):
+        if (event.button() == Qt.MouseButton.LeftButton
+                and self._move_start_pos is not None):
             current_pos = self.pos()
             start_pos = self._move_start_pos
             self._move_start_pos = None
-            if (
-                QLineF(start_pos, current_pos).length()
-                > QApplication.startDragDistance()
-            ):
+            if (QLineF(start_pos, current_pos).length()
+                    > QApplication.startDragDistance()):
                 logging.debug(
                     f"Node '{self.node_data.id}' moved from {start_pos} to {current_pos}. Creating command."
                 )
-                cmd = MoveNodeCommand(self, start_pos, current_pos, self.editor)
+                cmd = MoveNodeCommand(self, start_pos, current_pos,
+                                      self.editor)
                 self.editor.undo_stack.push(cmd)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent):
@@ -709,7 +709,9 @@ class GraphicsNode(QGraphicsItem):
         else:
             super().mouseDoubleClickEvent(event)
 
+
 class GraphicsEdge(QGraphicsItem):
+
     def __init__(
         self,
         source_node: GraphicsNode,
@@ -802,9 +804,8 @@ class GraphicsEdge(QGraphicsItem):
             )
             offset = 20.0
 
-        p1 = self.source.scenePos() + QPointF(
-            self.source.width / 2.0, self.source.height + offset
-        )
+        p1 = self.source.scenePos() + QPointF(self.source.width / 2.0,
+                                              self.source.height + offset)
         p2 = self.dest.scenePos() + QPointF(self.dest.width / 2.0, -offset)
 
         path = QPainterPath()
@@ -868,7 +869,8 @@ class GraphicsEdge(QGraphicsItem):
             tip_length = path_len - arrow_margin
             arrow_tip_percent = self._path.percentAtLength(tip_length)
             arrow_tip = self._path.pointAtPercent(arrow_tip_percent)
-            angle_check_percent = self._path.percentAtLength(max(0.0, tip_length - 1.0))
+            angle_check_percent = self._path.percentAtLength(
+                max(0.0, tip_length - 1.0))
             if angle_check_percent >= 1.0:
                 angle_check_percent = arrow_tip_percent
 
@@ -921,6 +923,7 @@ class GraphicsEdge(QGraphicsItem):
                     "Edge context menu couldn't find editor reference to delete."
                 )
 
+
 class ZoomPanGraphicsView(QGraphicsView):
     edgeDragStarted = pyqtSignal(GraphicsNode, QPointF)
     edgeDragMoved = pyqtSignal(QPointF)
@@ -937,10 +940,12 @@ class ZoomPanGraphicsView(QGraphicsView):
         self.editor = editor
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
-        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setTransformationAnchor(
+            QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self._zoom_factor_base = config.VIEW_ZOOM_FACTOR
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
@@ -954,8 +959,7 @@ class ZoomPanGraphicsView(QGraphicsView):
         min_scale = getattr(config, "VIEW_MIN_ZOOM", 0.1)
         max_scale = getattr(config, "VIEW_MAX_ZOOM", 10.0)
         if (factor > 1.0 and current_scale * factor > max_scale) or (
-            factor < 1.0 and current_scale * factor < min_scale
-        ):
+                factor < 1.0 and current_scale * factor < min_scale):
             event.ignore()
             return
         self.scale(factor, factor)
@@ -967,7 +971,8 @@ class ZoomPanGraphicsView(QGraphicsView):
             return
 
         accepted = False
-        if event.key() == Qt.Key.Key_Delete or event.key() == Qt.Key.Key_Backspace:
+        if event.key() == Qt.Key.Key_Delete or event.key(
+        ) == Qt.Key.Key_Backspace:
             self.editor.delete_selected_items_cmd()
             accepted = True
         elif event.matches(QKeySequence.StandardKey.New):
@@ -983,10 +988,8 @@ class ZoomPanGraphicsView(QGraphicsView):
         elif event.matches(QKeySequence.StandardKey.Paste):
             self.editor.paste_nodes()
             accepted = True
-        elif (
-            event.modifiers() == Qt.KeyboardModifier.ControlModifier
-            and event.key() == Qt.Key.Key_L
-        ):
+        elif (event.modifiers() == Qt.KeyboardModifier.ControlModifier
+              and event.key() == Qt.Key.Key_L):
             self.editor.link_selected_nodes_cmd()
             accepted = True
         elif event.key() == Qt.Key.Key_L and not self.editor.is_drawing_edge:
@@ -994,8 +997,7 @@ class ZoomPanGraphicsView(QGraphicsView):
             if len(selected_nodes) == 1:
                 source_node = selected_nodes[0]
                 line_start_pos = source_node.scenePos() + QPointF(
-                    source_node.width / 2, source_node.height
-                )
+                    source_node.width / 2, source_node.height)
                 self.edgeDragStarted.emit(source_node, line_start_pos)
                 accepted = True
             else:
@@ -1006,7 +1008,7 @@ class ZoomPanGraphicsView(QGraphicsView):
             if self.editor.is_drawing_edge:
                 self.edgeDragCancelled.emit()
                 accepted = True
-            else:  
+            else:
                 self.editor.clear_all_highlights()
                 if self.scene():
                     self.scene().clearSelection()
@@ -1051,26 +1053,29 @@ class ZoomPanGraphicsView(QGraphicsView):
                 if self.editor:
                     self.editor.add_node_cmd(
                         pos=scene_pos,
-                        character=self.editor.get_default_character_for_new_node(),
+                        character=self.editor.
+                        get_default_character_for_new_node(),
                     )
             elif action == paste_action:
                 if self.editor:
                     self.editor.paste_nodes(scene_pos)
 
-        else:  
+        else:
             super().contextMenuEvent(event)
+
 
 class ClickAwareListWidget(QListWidget):
     focusRequested = pyqtSignal(str)
     editRequested = pyqtSignal(QListWidgetItem)
     nextToChoiceRequested = pyqtSignal(QListWidgetItem)
 
-    def __init__(self, editor: "DialogueEditor", parent: Optional[QWidget] = None):
+    def __init__(self,
+                 editor: "DialogueEditor",
+                 parent: Optional[QWidget] = None):
         super().__init__(parent)
         self.editor = editor
         self.focus_click_threshold_percent = getattr(
-            config, "LIST_FOCUS_CLICK_THRESHOLD_PERCENT", 60
-        )
+            config, "LIST_FOCUS_CLICK_THRESHOLD_PERCENT", 60)
 
     def mousePressEvent(self, event: QMouseEvent):
         item = self.itemAt(event.pos())
@@ -1079,19 +1084,15 @@ class ClickAwareListWidget(QListWidget):
             return
 
         item_data = item.data(Qt.ItemDataRole.UserRole)
-        if (
-            not item_data
-            or not isinstance(item_data, (list, tuple))
-            or len(item_data) < 1
-        ):
+        if (not item_data or not isinstance(item_data, (list, tuple))
+                or len(item_data) < 1):
             super().mousePressEvent(event)
             return
 
         item_rect = self.visualItemRect(item)
         click_x = event.pos().x()
         focus_threshold_x = item_rect.left() + item_rect.width() * (
-            self.focus_click_threshold_percent / 100.0
-        )
+            self.focus_click_threshold_percent / 100.0)
 
         connection_type = item_data[0]
         target_id = None
@@ -1104,15 +1105,15 @@ class ClickAwareListWidget(QListWidget):
                 target_id = item_data[1]
         except IndexError:
             logging.warning(
-                f"IndexError accessing item data for focus click: {item_data}"
-            )
+                f"IndexError accessing item data for focus click: {item_data}")
             super().mousePressEvent(event)
             return
 
         if click_x > focus_threshold_x and target_id is not None:
-            logging.debug(f"Focus click detected! Emitting focusRequested({target_id})")
+            logging.debug(
+                f"Focus click detected! Emitting focusRequested({target_id})")
             self.focusRequested.emit(target_id)
-            self.setCurrentItem(None)  
+            self.setCurrentItem(None)
             event.accept()
         else:
             logging.debug("Non-focus click detected. Passing to base class.")
@@ -1134,8 +1135,9 @@ class ClickAwareListWidget(QListWidget):
                     return
         super().mouseDoubleClickEvent(event)
 
+
 class ValidationResultsDialog(QDialog):
-    focusRequested = pyqtSignal(str)  
+    focusRequested = pyqtSignal(str)
 
     def __init__(
         self,
@@ -1150,8 +1152,7 @@ class ValidationResultsDialog(QDialog):
         layout = QVBoxLayout(self)
         self.results_list = QListWidget()
         self.results_list.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
+            QAbstractItemView.SelectionMode.SingleSelection)
         layout.addWidget(self.results_list)
 
         for level, message, node_id in results:
@@ -1161,12 +1162,11 @@ class ValidationResultsDialog(QDialog):
             elif level == "WARNING":
                 item.setForeground(QColor("orange"))
             if node_id:
-                item.setData(
-                    Qt.ItemDataRole.UserRole, node_id
-                )  
+                item.setData(Qt.ItemDataRole.UserRole, node_id)
             self.results_list.addItem(item)
 
-        self.results_list.itemDoubleClicked.connect(self._on_item_double_clicked)
+        self.results_list.itemDoubleClicked.connect(
+            self._on_item_double_clicked)
 
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok)
         button_box.accepted.connect(self.accept)
@@ -1177,7 +1177,9 @@ class ValidationResultsDialog(QDialog):
         if node_id:
             self.focusRequested.emit(node_id)
 
+
 class AddNodeCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_data: DialogueNodeData,
@@ -1207,30 +1209,25 @@ class AddNodeCommand(BaseUndoCommand):
 
         set_as_start = self.node_data.is_start_node or self.was_first_node
         if set_as_start:
-            if not self.editor._set_start_node_internal(self.graphics_node, force=True):
+            if not self.editor._set_start_node_internal(self.graphics_node,
+                                                        force=True):
                 logging.warning(
                     f"Failed to set new node '{self.node_data.id}' as start during redo."
                 )
-            actual_id_after_set = (
-                self.graphics_node.node_data.id
-            )  
+            actual_id_after_set = self.graphics_node.node_data.id
             self.node_data.is_start_node = (
-                self.editor.start_node_id == actual_id_after_set
-            )
+                self.editor.start_node_id == actual_id_after_set)
 
         self.editor._mark_unsaved()
         self.editor.update_properties_panel()
         self.editor.scene.clearSelection()
         if self.graphics_node:
             self.graphics_node.setSelected(True)
-        self.editor.update_dynamic_node_visuals(
-            self.node_data.id
-        )  
+        self.editor.update_dynamic_node_visuals(self.node_data.id)
 
     def undo(self):
-        node_id_to_delete = (
-            self.graphics_node.node_data.id if self.graphics_node else self.node_data.id
-        )
+        node_id_to_delete = (self.graphics_node.node_data.id
+                             if self.graphics_node else self.node_data.id)
         if self.editor._delete_node_internal(node_id_to_delete):
             self.editor._mark_unsaved()
             self.editor.update_properties_panel()
@@ -1240,17 +1237,19 @@ class AddNodeCommand(BaseUndoCommand):
             )
             self.setObsolete(True)
 
+
 class DeleteNodeCommand(BaseUndoCommand):
-    def __init__(
-        self, node_id: str, editor: "DialogueEditor", parent: Optional[QObject] = None
-    ):
+
+    def __init__(self,
+                 node_id: str,
+                 editor: "DialogueEditor",
+                 parent: Optional[QObject] = None):
         super().__init__(editor, f"Delete Node '{node_id}'", parent)
         self.node_id = node_id
         self.node_data_dict: Optional[Dict[str, Any]] = None
         self.was_start_node: bool = False
-        self.incoming_connections: List[
-            Tuple[str, str, Optional[int], Optional[Tuple]]
-        ] = []
+        self.incoming_connections: List[Tuple[str, str, Optional[int],
+                                              Optional[Tuple]]] = []
         self.was_bookmarked: bool = False
 
     def redo(self):
@@ -1275,7 +1274,8 @@ class DeleteNodeCommand(BaseUndoCommand):
             else:
                 for i, choice in enumerate(src_data.choices):
                     if choice[1] == self.node_id:
-                        self.incoming_connections.append((src_id, "choice", i, choice))
+                        self.incoming_connections.append(
+                            (src_id, "choice", i, choice))
 
         if self.was_bookmarked:
             self.editor.bookmarks.discard(self.node_id)
@@ -1296,7 +1296,8 @@ class DeleteNodeCommand(BaseUndoCommand):
 
     def undo(self):
         if not self.node_data_dict:
-            logging.warning("No node data stored for undo deletion. Command obsolete.")
+            logging.warning(
+                "No node data stored for undo deletion. Command obsolete.")
             self.setObsolete(True)
             return
         if self.node_id in self.editor.nodes_data:
@@ -1334,10 +1335,11 @@ class DeleteNodeCommand(BaseUndoCommand):
                         src_node_data.next_node = None
                         if not isinstance(src_node_data.choices, list):
                             src_node_data.choices = []
-                        if isinstance(index_or_none, int) and 0 <= index_or_none <= len(
-                            src_node_data.choices
-                        ):
-                            src_node_data.choices.insert(index_or_none, choice_data)
+                        if isinstance(index_or_none,
+                                      int) and 0 <= index_or_none <= len(
+                                          src_node_data.choices):
+                            src_node_data.choices.insert(
+                                index_or_none, choice_data)
                         else:
                             logging.warning(
                                 f"Invalid index ({index_or_none}) restoring choice to {src_id}. Appending."
@@ -1349,7 +1351,8 @@ class DeleteNodeCommand(BaseUndoCommand):
                     )
 
         if self.was_start_node:
-            if not self.editor._set_start_node_internal(restored_gnode, force=True):
+            if not self.editor._set_start_node_internal(restored_gnode,
+                                                        force=True):
                 logging.warning(
                     f"Failed to restore start node status for '{self.node_id}' during undo."
                 )
@@ -1368,7 +1371,9 @@ class DeleteNodeCommand(BaseUndoCommand):
         self.editor.update_properties_panel()
         self.editor.update_dynamic_node_visuals(self.node_id)
 
+
 class MoveNodeCommand(BaseUndoCommand):
+
     def __init__(
         self,
         graphics_node: GraphicsNode,
@@ -1404,7 +1409,9 @@ class MoveNodeCommand(BaseUndoCommand):
         if self._set_pos_and_update(self.old_pos):
             self.editor._mark_unsaved()
 
+
 class SetNodeTextCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -1457,13 +1464,16 @@ class SetNodeTextCommand(BaseUndoCommand):
         return base_id + hash_val
 
     def mergeWith(self, other: QUndoCommand) -> bool:
-        if not isinstance(other, SetNodeTextCommand) or other.id() != self.id():
+        if not isinstance(other,
+                          SetNodeTextCommand) or other.id() != self.id():
             return False
         self.new_text = other.new_text
         logging.debug(f"Merged text command for node {self.node_id}")
         return True
 
+
 class ApplyLayoutCommand(BaseUndoCommand):
+
     def __init__(
         self,
         old_positions_dict: Dict[str, QPointF],
@@ -1475,12 +1485,11 @@ class ApplyLayoutCommand(BaseUndoCommand):
         super().__init__(editor, text, parent)
         self.old_positions = old_positions_dict.copy()
         self.new_positions = new_positions_dict.copy()
-        self.applied_state: Optional[str] = None  
+        self.applied_state: Optional[str] = None
 
     def _apply_positions(self, positions_to_apply: Dict[str, QPointF]):
         if not hasattr(self.editor, "graphics_nodes") or not hasattr(
-            self.editor, "redraw_all_edges"
-        ):
+                self.editor, "redraw_all_edges"):
             logging.error("Editor references missing in ApplyLayoutCommand.")
             self.setObsolete(True)
             return
@@ -1490,17 +1499,16 @@ class ApplyLayoutCommand(BaseUndoCommand):
             gnode = self.editor.graphics_nodes.get(node_id)
             if gnode:
                 current_pos = gnode.pos()
-                if (
-                    abs(current_pos.x() - target_pos.x()) > 0.01
-                    or abs(current_pos.y() - target_pos.y()) > 0.01
-                ):
+                if (abs(current_pos.x() - target_pos.x()) > 0.01
+                        or abs(current_pos.y() - target_pos.y()) > 0.01):
                     gnode.setPos(target_pos)
                     nodes_updated += 1
             else:
                 logging.warning(
                     f"Node '{node_id}' not found during layout command execution."
                 )
-        logging.info(f"Layout Command: Applied positions for {nodes_updated} nodes.")
+        logging.info(
+            f"Layout Command: Applied positions for {nodes_updated} nodes.")
         self.editor.redraw_all_edges()
         if hasattr(self.editor, "_fit_view_after_layout"):
             self.editor._fit_view_after_layout()
@@ -1523,7 +1531,9 @@ class ApplyLayoutCommand(BaseUndoCommand):
         else:
             logging.debug("Undo ApplyLayoutCommand: Already in target state.")
 
+
 class SetNodeCharCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -1544,9 +1554,7 @@ class SetNodeCharCommand(BaseUndoCommand):
             gnode = self.editor.graphics_nodes.get(self.node_id)
             if gnode:
                 gnode.update()
-                self.editor.update_dynamic_node_visuals(
-                    self.node_id
-                )  
+                self.editor.update_dynamic_node_visuals(self.node_id)
 
             selected_node = self.editor.get_selected_node()
             if selected_node and selected_node.node_data.id == self.node_id:
@@ -1579,13 +1587,16 @@ class SetNodeCharCommand(BaseUndoCommand):
         return base_id + hash_val
 
     def mergeWith(self, other: QUndoCommand) -> bool:
-        if not isinstance(other, SetNodeCharCommand) or other.id() != self.id():
+        if not isinstance(other,
+                          SetNodeCharCommand) or other.id() != self.id():
             return False
         self.new_char = other.new_char
         logging.debug(f"Merged character command for node {self.node_id}")
         return True
 
+
 class SetStartNodeCommand(BaseUndoCommand):
+
     def __init__(
         self,
         new_start_id: str,
@@ -1598,8 +1609,7 @@ class SetStartNodeCommand(BaseUndoCommand):
         self.old_start_node_id = old_start_id
         self.new_node_was_renamed_from: Optional[str] = None
         self.old_node_needs_rename_from_start: bool = (
-            old_start_id == config.START_NODE_EXPORT_ID
-        )
+            old_start_id == config.START_NODE_EXPORT_ID)
 
     def redo(self):
         gnode_to_set = self.editor.graphics_nodes.get(self.new_start_node_id)
@@ -1613,10 +1623,8 @@ class SetStartNodeCommand(BaseUndoCommand):
         original_id_before_set = gnode_to_set.node_data.id
         if self.editor._set_start_node_internal(gnode_to_set, force=True):
             final_id_after_set = gnode_to_set.node_data.id
-            if (
-                final_id_after_set == config.START_NODE_EXPORT_ID
-                and original_id_before_set != config.START_NODE_EXPORT_ID
-            ):
+            if (final_id_after_set == config.START_NODE_EXPORT_ID
+                    and original_id_before_set != config.START_NODE_EXPORT_ID):
                 self.new_node_was_renamed_from = original_id_before_set
                 logging.info(
                     f"SetStartNode redo: Renamed '{original_id_before_set}' to '{final_id_after_set}'."
@@ -1634,27 +1642,24 @@ class SetStartNodeCommand(BaseUndoCommand):
 
     def undo(self):
 
-        id_that_was_set_by_redo = (
-            config.START_NODE_EXPORT_ID
-            if self.new_node_was_renamed_from
-            else self.new_start_node_id
-        )
+        id_that_was_set_by_redo = (config.START_NODE_EXPORT_ID
+                                   if self.new_node_was_renamed_from else
+                                   self.new_start_node_id)
 
         current_actual_start_id = self.editor.start_node_id
 
-        if (
-            self.new_node_was_renamed_from
-            and current_actual_start_id == config.START_NODE_EXPORT_ID
-        ):
-            start_gnode = self.editor.graphics_nodes.get(config.START_NODE_EXPORT_ID)
+        if (self.new_node_was_renamed_from
+                and current_actual_start_id == config.START_NODE_EXPORT_ID):
+            start_gnode = self.editor.graphics_nodes.get(
+                config.START_NODE_EXPORT_ID)
             if start_gnode:
                 logging.info(
                     f"SetStartNode undo: Attempting rename '{config.START_NODE_EXPORT_ID}' back to '{self.new_node_was_renamed_from}'."
                 )
                 if not self.editor._perform_node_rename_internal(
-                    start_gnode,
-                    config.START_NODE_EXPORT_ID,
-                    self.new_node_was_renamed_from,
+                        start_gnode,
+                        config.START_NODE_EXPORT_ID,
+                        self.new_node_was_renamed_from,
                 ):
                     logging.error(
                         f"Failed to rename '{config.START_NODE_EXPORT_ID}' back to '{self.new_node_was_renamed_from}' during undo."
@@ -1670,18 +1675,18 @@ class SetStartNodeCommand(BaseUndoCommand):
         if id_that_was_set_by_redo in self.editor.graphics_nodes:
             self.editor._unset_start_node_visuals(id_that_was_set_by_redo)
 
-        self.editor.start_node_id = None  
+        self.editor.start_node_id = None
 
         if self.old_start_node_id:
-            gnode_to_restore = self.editor.graphics_nodes.get(self.old_start_node_id)
+            gnode_to_restore = self.editor.graphics_nodes.get(
+                self.old_start_node_id)
             if gnode_to_restore:
                 logging.info(
                     f"SetStartNode undo: Restoring start node to '{self.old_start_node_id}'."
                 )
 
-                if not self.editor._set_start_node_internal(
-                    gnode_to_restore, force=True
-                ):
+                if not self.editor._set_start_node_internal(gnode_to_restore,
+                                                            force=True):
                     logging.warning(
                         f"Failed to restore original start node '{self.old_start_node_id}' during undo."
                     )
@@ -1690,13 +1695,16 @@ class SetStartNodeCommand(BaseUndoCommand):
                     f"Original start node '{self.old_start_node_id}' graphics not found during undo."
                 )
         else:
-            logging.info("SetStartNode undo: No previous start node to restore.")
+            logging.info(
+                "SetStartNode undo: No previous start node to restore.")
 
         self.editor.update_properties_panel()
-        self.editor.redraw_all_edges()  
+        self.editor.redraw_all_edges()
         self.editor._mark_unsaved()
 
+
 class AddChoiceCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -1706,11 +1714,8 @@ class AddChoiceCommand(BaseUndoCommand):
         editor: "DialogueEditor",
         parent: Optional[QObject] = None,
     ):
-        desc = (
-            f"'Next' to '{target_id}'"
-            if text == config.DEFAULT_CHOICE_TEXT
-            else f"Choice '{text}'"
-        )
+        desc = (f"'Next' to '{target_id}'"
+                if text == config.DEFAULT_CHOICE_TEXT else f"Choice '{text}'")
         super().__init__(editor, f"Add {desc} to '{node_id}'", parent)
         self.node_id = node_id
         self.choice_tuple = (str(text), str(target_id), str(preset))
@@ -1727,9 +1732,8 @@ class AddChoiceCommand(BaseUndoCommand):
             return
 
         self.was_next = node_data.next_node
-        self.overwritten_choices = (
-            list(node_data.choices) if isinstance(node_data.choices, list) else []
-        )
+        self.overwritten_choices = (list(node_data.choices) if isinstance(
+            node_data.choices, list) else [])
 
         is_default_choice = self.choice_tuple[0] == config.DEFAULT_CHOICE_TEXT
         if is_default_choice:
@@ -1774,11 +1778,8 @@ class AddChoiceCommand(BaseUndoCommand):
             return
 
         node_data.next_node = self.was_next
-        node_data.choices = (
-            list(self.overwritten_choices)
-            if isinstance(self.overwritten_choices, list)
-            else []
-        )
+        node_data.choices = (list(self.overwritten_choices) if isinstance(
+            self.overwritten_choices, list) else [])
         logging.debug(
             f"AddChoice undo: Restored next='{node_data.next_node}', choices={node_data.choices}"
         )
@@ -1791,7 +1792,9 @@ class AddChoiceCommand(BaseUndoCommand):
         self.editor._mark_unsaved()
         self.editor.update_dynamic_node_visuals(self.node_id)
 
+
 class RemoveChoiceCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -1815,18 +1818,14 @@ class RemoveChoiceCommand(BaseUndoCommand):
             self.setObsolete(True)
             return
 
-        self.restored_next = (
-            node_data.next_node
-        )  
+        self.restored_next = node_data.next_node
         removed = False
         try:
             if not isinstance(node_data.choices, list):
                 node_data.choices = []
 
-            if (
-                0 <= self.index < len(node_data.choices)
-                and node_data.choices[self.index] == self.choice_tuple
-            ):
+            if (0 <= self.index < len(node_data.choices)
+                    and node_data.choices[self.index] == self.choice_tuple):
                 node_data.choices.pop(self.index)
                 removed = True
             elif self.choice_tuple in node_data.choices:
@@ -1851,7 +1850,8 @@ class RemoveChoiceCommand(BaseUndoCommand):
                 self.setObsolete(True)
 
         except (ValueError, IndexError) as e:
-            logging.exception(f"Error during RemoveChoice redo for {self.node_id}: {e}")
+            logging.exception(
+                f"Error during RemoveChoice redo for {self.node_id}: {e}")
             self.setObsolete(True)
 
     def undo(self):
@@ -1864,7 +1864,7 @@ class RemoveChoiceCommand(BaseUndoCommand):
             return
 
         if node_data.next_node:
-            node_data.next_node = None  
+            node_data.next_node = None
         if not isinstance(node_data.choices, list):
             node_data.choices = []
 
@@ -1880,7 +1880,7 @@ class RemoveChoiceCommand(BaseUndoCommand):
             logging.exception(
                 f"Error during RemoveChoice undo insert for {self.node_id}: {e}"
             )
-            node_data.choices.append(self.choice_tuple)  
+            node_data.choices.append(self.choice_tuple)
 
         self.editor.update_properties_panel()
         gnode = self.editor.graphics_nodes.get(self.node_id)
@@ -1890,7 +1890,9 @@ class RemoveChoiceCommand(BaseUndoCommand):
         self.editor._mark_unsaved()
         self.editor.update_dynamic_node_visuals(self.node_id)
 
+
 class EditChoiceCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -1918,19 +1920,14 @@ class EditChoiceCommand(BaseUndoCommand):
         try:
             if 0 <= self.index < len(node_data.choices):
 
-                expected_prior = (
-                    self.old_choice
-                    if choice_to_set == self.new_choice
-                    else self.new_choice
-                )
+                expected_prior = (self.old_choice if choice_to_set
+                                  == self.new_choice else self.new_choice)
                 if node_data.choices[self.index] == expected_prior:
                     node_data.choices[self.index] = choice_to_set
                     self.editor.update_properties_panel()
                     gnode = self.editor.graphics_nodes.get(self.node_id)
                     if gnode:
-                        self.editor.draw_edges_for_node(
-                            gnode
-                        )  
+                        self.editor.draw_edges_for_node(gnode)
                     self.editor._mark_unsaved()
                     self.editor.update_dynamic_node_visuals(self.node_id)
                     return True
@@ -1948,8 +1945,7 @@ class EditChoiceCommand(BaseUndoCommand):
                 return False
         except Exception as e:
             logging.exception(
-                f"Error during EditChoice._set_choice for {self.node_id}: {e}"
-            )
+                f"Error during EditChoice._set_choice for {self.node_id}: {e}")
             self.setObsolete(True)
             return False
 
@@ -1959,7 +1955,9 @@ class EditChoiceCommand(BaseUndoCommand):
     def undo(self):
         self._set_choice(self.old_choice)
 
+
 class ConvertNextToChoiceCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -1969,7 +1967,8 @@ class ConvertNextToChoiceCommand(BaseUndoCommand):
         editor: "DialogueEditor",
         parent: Optional[QObject] = None,
     ):
-        super().__init__(editor, f"Convert Next to Choice for '{node_id}'", parent)
+        super().__init__(editor, f"Convert Next to Choice for '{node_id}'",
+                         parent)
         self.node_id = node_id
         self.old_next_target = old_next_target
         self.new_choice_tuple = (
@@ -2017,10 +2016,8 @@ class ConvertNextToChoiceCommand(BaseUndoCommand):
             )
             self.setObsolete(True)
             return
-        if (
-            node_data.next_node is not None
-            or self.new_choice_tuple not in node_data.choices
-        ):
+        if (node_data.next_node is not None
+                or self.new_choice_tuple not in node_data.choices):
             logging.warning(
                 f"ConvertNextToChoice undo state mismatch for node '{self.node_id}'. Expected next=None and choice={self.new_choice_tuple}, found next='{node_data.next_node}' and choices={node_data.choices}. Obsolete."
             )
@@ -2034,7 +2031,7 @@ class ConvertNextToChoiceCommand(BaseUndoCommand):
             logging.warning(
                 f"Failed to remove choice {self.new_choice_tuple} during ConvertNextToChoice undo for node {self.node_id}."
             )
-            node_data.choices = []  
+            node_data.choices = []
 
         self.editor.update_properties_panel()
         gnode = self.editor.graphics_nodes.get(self.node_id)
@@ -2047,7 +2044,9 @@ class ConvertNextToChoiceCommand(BaseUndoCommand):
             f"ConvertNextToChoice undo: Restored next->{self.old_next_target} for node {self.node_id}"
         )
 
+
 class SetNextNodeCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -2056,7 +2055,8 @@ class SetNextNodeCommand(BaseUndoCommand):
         parent: Optional[QObject] = None,
     ):
         target_desc = f"'{target_id}'" if target_id else "None"
-        super().__init__(editor, f"Set Next '{node_id}' -> {target_desc}", parent)
+        super().__init__(editor, f"Set Next '{node_id}' -> {target_desc}",
+                         parent)
         self.node_id = node_id
         self.new_target_id = target_id
         self.old_target_id: Optional[str] = None
@@ -2068,7 +2068,7 @@ class SetNextNodeCommand(BaseUndoCommand):
             self.old_target_id = node_data.next_node
             self.old_choices = list(node_data.choices)
             node_data.next_node = self.new_target_id
-            node_data.choices = []  
+            node_data.choices = []
 
             self.editor.update_properties_panel()
             gnode = self.editor.graphics_nodes.get(self.node_id)
@@ -2102,7 +2102,9 @@ class SetNextNodeCommand(BaseUndoCommand):
             )
             self.setObsolete(True)
 
+
 class ClearConnectionsCommand(BaseUndoCommand):
+
     def __init__(
         self,
         node_id: str,
@@ -2158,7 +2160,9 @@ class ClearConnectionsCommand(BaseUndoCommand):
             )
             self.setObsolete(True)
 
+
 class RenameNodeIdCommand(BaseUndoCommand):
+
     def __init__(
         self,
         old_id: str,
@@ -2180,8 +2184,7 @@ class RenameNodeIdCommand(BaseUndoCommand):
             return
 
         if not self.editor._perform_node_rename_internal(
-            gnode, self.old_id, self.new_id
-        ):
+                gnode, self.old_id, self.new_id):
             logging.error(
                 f"Rename redo error: Internal rename failed for '{self.old_id}' -> '{self.new_id}'. Obsolete."
             )
@@ -2191,13 +2194,10 @@ class RenameNodeIdCommand(BaseUndoCommand):
 
             renamed_node = self.editor.graphics_nodes.get(self.new_id)
             current_selection = self.editor.get_selected_node()
-            if (
-                renamed_node
-                and current_selection
-                and current_selection.node_data.id == self.new_id
-            ):
+            if (renamed_node and current_selection
+                    and current_selection.node_data.id == self.new_id):
                 self.editor.update_properties_panel()
-            elif renamed_node:  
+            elif renamed_node:
                 renamed_node.update()
 
     def undo(self):
@@ -2210,8 +2210,7 @@ class RenameNodeIdCommand(BaseUndoCommand):
             return
 
         if not self.editor._perform_node_rename_internal(
-            gnode, self.new_id, self.old_id
-        ):
+                gnode, self.new_id, self.old_id):
             logging.error(
                 f"Rename undo error: Internal rename failed for '{self.new_id}' -> '{self.old_id}'. Obsolete."
             )
@@ -2221,44 +2220,35 @@ class RenameNodeIdCommand(BaseUndoCommand):
 
             reverted_node = self.editor.graphics_nodes.get(self.old_id)
             current_selection = self.editor.get_selected_node()
-            if (
-                reverted_node
-                and current_selection
-                and current_selection.node_data.id == self.old_id
-            ):
+            if (reverted_node and current_selection
+                    and current_selection.node_data.id == self.old_id):
                 self.editor.update_properties_panel()
-            elif reverted_node:  
+            elif reverted_node:
                 reverted_node.update()
 
+
 class DeleteEdgeCommand(BaseUndoCommand):
+
     def __init__(
         self,
         edge: GraphicsEdge,
         editor: "DialogueEditor",
         parent: Optional[QObject] = None,
     ):
-        src_id = (
-            edge.source.node_data.id
-            if edge.source and hasattr(edge.source, "node_data")
-            else "N/A"
-        )
-        dest_id = (
-            edge.dest.node_data.id
-            if edge.dest and hasattr(edge.dest, "node_data")
-            else "N/A"
-        )
+        src_id = (edge.source.node_data.id if edge.source
+                  and hasattr(edge.source, "node_data") else "N/A")
+        dest_id = (edge.dest.node_data.id
+                   if edge.dest and hasattr(edge.dest, "node_data") else "N/A")
         super().__init__(editor, f"Delete Edge {src_id}->{dest_id}", parent)
         self.source_id = src_id
         self.dest_id = dest_id
-        self.edge_choice_text = edge.choice_text  
-        self.connection_type: Optional[str] = None  
+        self.edge_choice_text = edge.choice_text
+        self.connection_type: Optional[str] = None
         self.choice_index: int = -1
         self.choice_data: Optional[Tuple] = None
 
     def redo(self):
-        edge = (
-            self._find_edge_object()
-        )  
+        edge = self._find_edge_object()
         source_node_data = self.editor.nodes_data.get(self.source_id)
 
         if not source_node_data:
@@ -2283,15 +2273,15 @@ class DeleteEdgeCommand(BaseUndoCommand):
         elif isinstance(source_node_data.choices, list):
             found_idx = -1
             found_choice = None
-            for i, choice in enumerate(list(source_node_data.choices)):  
+            for i, choice in enumerate(list(source_node_data.choices)):
 
                 is_match = (choice[1] == self.dest_id) and (
-                    self.edge_choice_text is None or choice[0] == self.edge_choice_text
-                )
+                    self.edge_choice_text is None
+                    or choice[0] == self.edge_choice_text)
                 if is_match:
                     found_idx = i
                     found_choice = choice
-                    break  
+                    break
 
             if found_idx != -1 and found_choice is not None:
                 self.connection_type = "choice"
@@ -2307,7 +2297,7 @@ class DeleteEdgeCommand(BaseUndoCommand):
                     logging.error(
                         f"Index error removing choice {found_idx} for edge {self.source_id}->{self.dest_id}."
                     )
-                    conn_removed = False  
+                    conn_removed = False
 
         if not conn_removed:
             logging.warning(
@@ -2315,7 +2305,7 @@ class DeleteEdgeCommand(BaseUndoCommand):
             )
 
         if edge:
-            self.editor.remove_edge_object(edge)  
+            self.editor.remove_edge_object(edge)
             logging.debug(f"DeleteEdge redo: Removed graphical edge object.")
         else:
             logging.warning(
@@ -2326,7 +2316,7 @@ class DeleteEdgeCommand(BaseUndoCommand):
         self.editor.update_properties_panel()
         gnode = self.editor.graphics_nodes.get(self.source_id)
         if gnode:
-            gnode.update()  
+            gnode.update()
 
     def undo(self):
         source_node = self.editor.graphics_nodes.get(self.source_id)
@@ -2351,19 +2341,20 @@ class DeleteEdgeCommand(BaseUndoCommand):
         try:
             if self.connection_type == "next":
                 source_node_data.next_node = self.dest_id
-                source_node_data.choices = []  
+                source_node_data.choices = []
                 restored = True
                 logging.debug(
                     f"DeleteEdge undo: Restoring 'next' link {self.source_id}->{self.dest_id}"
                 )
             elif self.connection_type == "choice" and self.choice_data:
-                source_node_data.next_node = None  
+                source_node_data.next_node = None
                 if not isinstance(source_node_data.choices, list):
                     source_node_data.choices = []
 
                 if 0 <= self.choice_index <= len(source_node_data.choices):
-                    source_node_data.choices.insert(self.choice_index, self.choice_data)
-                else:  
+                    source_node_data.choices.insert(self.choice_index,
+                                                    self.choice_data)
+                else:
                     logging.warning(
                         f"Invalid index {self.choice_index} for undoing choice add. Appending instead."
                     )
@@ -2379,8 +2370,7 @@ class DeleteEdgeCommand(BaseUndoCommand):
 
         except Exception as e:
             logging.exception(
-                f"Error restoring data connection during DeleteEdge undo: {e}"
-            )
+                f"Error restoring data connection during DeleteEdge undo: {e}")
             restored = False
 
         if restored:
@@ -2397,25 +2387,25 @@ class DeleteEdgeCommand(BaseUndoCommand):
     def _find_edge_object(self) -> Optional[GraphicsEdge]:
         """Finds the specific GraphicsEdge object matching the command's details."""
         for edge in self.editor.graphics_edges:
-            if (
-                edge.source
-                and edge.dest
-                and hasattr(edge.source, "node_data")
-                and hasattr(edge.dest, "node_data")
-                and edge.source.node_data.id == self.source_id
-                and edge.dest.node_data.id == self.dest_id
-                and edge.choice_text == self.edge_choice_text
-            ):  
+            if (edge.source and edge.dest and hasattr(edge.source, "node_data")
+                    and hasattr(edge.dest, "node_data")
+                    and edge.source.node_data.id == self.source_id
+                    and edge.dest.node_data.id == self.dest_id
+                    and edge.choice_text == self.edge_choice_text):
                 return edge
         return None
 
+
 class ToggleBookmarkCommand(BaseUndoCommand):
-    def __init__(
-        self, node_id: str, editor: "DialogueEditor", parent: Optional[QObject] = None
-    ):
+
+    def __init__(self,
+                 node_id: str,
+                 editor: "DialogueEditor",
+                 parent: Optional[QObject] = None):
         self.is_adding = node_id not in editor.bookmarks
         action_text = "Add" if self.is_adding else "Remove"
-        super().__init__(editor, f"{action_text} Bookmark for '{node_id}'", parent)
+        super().__init__(editor, f"{action_text} Bookmark for '{node_id}'",
+                         parent)
         self.node_id = node_id
 
     def redo(self):
@@ -2436,14 +2426,16 @@ class ToggleBookmarkCommand(BaseUndoCommand):
         self.editor.update_dynamic_node_visuals(self.node_id)
         self.editor._mark_unsaved()
 
+
 class DialogueEditor(QMainWindow):
+
     def __init__(self):
         super().__init__()
         self.nodes_data: Dict[str, DialogueNodeData] = {}
         self.graphics_nodes: Dict[str, GraphicsNode] = {}
         self.graphics_edges: List[GraphicsEdge] = []
-        self.bookmarks: Set[str] = set()  
-        self.clipboard: List[Dict] = []  
+        self.bookmarks: Set[str] = set()
+        self.clipboard: List[Dict] = []
         self.choices_list: Optional[ClickAwareListWidget] = None
         self.undo_stack = QUndoStack(self)
         self.start_node_id: Optional[str] = None
@@ -2493,11 +2485,8 @@ class DialogueEditor(QMainWindow):
 
     def _update_window_title(self):
         base_title = config.APP_NAME
-        project_name = (
-            os.path.basename(self.current_project_path)
-            if self.current_project_path
-            else "Untitled"
-        )
+        project_name = (os.path.basename(self.current_project_path)
+                        if self.current_project_path else "Untitled")
         saved_marker = "*" if self.unsaved_changes else ""
         self.setWindowTitle(f"{base_title} - {project_name}{saved_marker}")
 
@@ -2509,7 +2498,8 @@ class DialogueEditor(QMainWindow):
                 self.undo_action.setEnabled(self.undo_stack.canUndo())
             if self.redo_action:
                 self.redo_action.setEnabled(self.undo_stack.canRedo())
-            logging.debug(f"Unsaved changes status set to: {self.unsaved_changes}")
+            logging.debug(
+                f"Unsaved changes status set to: {self.unsaved_changes}")
 
     def _on_char_changed_in_panel(self):
         selected_node = self.get_selected_node()
@@ -2524,9 +2514,7 @@ class DialogueEditor(QMainWindow):
         if selected_node.node_data.character != current_char_in_panel:
             selected_node.node_data.character = current_char_in_panel
             selected_node.update()
-            self.update_dynamic_node_visuals(
-                selected_node.node_data.id
-            )  
+            self.update_dynamic_node_visuals(selected_node.node_data.id)
             self._mark_unsaved()
 
         original_char_for_command = self._original_node_char
@@ -2607,7 +2595,8 @@ class DialogueEditor(QMainWindow):
         logging.debug("Close event triggered.")
         if hasattr(self, "undo_stack") and self.undo_stack:
             try:
-                self.undo_stack.indexChanged.disconnect(self._handle_undo_stack_change)
+                self.undo_stack.indexChanged.disconnect(
+                    self._handle_undo_stack_change)
                 logging.debug("Disconnected undo_stack.indexChanged signal.")
             except TypeError:
                 logging.debug(
@@ -2619,8 +2608,7 @@ class DialogueEditor(QMainWindow):
                 )
             except Exception as e:
                 logging.warning(
-                    f"Unexpected error disconnecting undo stack signal: {e}"
-                )
+                    f"Unexpected error disconnecting undo stack signal: {e}")
 
         try:
             self._push_text_edit_command()
@@ -2653,28 +2641,28 @@ class DialogueEditor(QMainWindow):
             logging.error(
                 f"RuntimeError during closeEvent processing (after disconnect): {e}"
             )
-            event.accept()  
+            event.accept()
         except Exception as e:
-            logging.error(f"Unexpected error during closeEvent processing: {e}")
-            event.accept()  
+            logging.error(
+                f"Unexpected error during closeEvent processing: {e}")
+            event.accept()
 
     def find_node(self):
         self._push_text_edit_command()
         self._push_char_edit_command()
         self._check_pending_custom_prop_changes()
         search_types = ["Node ID", "Character", "Text"]
-        search_type, ok1 = QInputDialog.getItem(
-            self, "Find Node", "Search by:", search_types, 0, False
-        )
+        search_type, ok1 = QInputDialog.getItem(self, "Find Node",
+                                                "Search by:", search_types, 0,
+                                                False)
         if not ok1:
             return
         search_term, ok2 = QInputDialog.getText(
-            self, "Find Node", f"Enter {search_type} to find:"
-        )
+            self, "Find Node", f"Enter {search_type} to find:")
         if not ok2 or not search_term.strip():
             return
 
-        self.clear_all_highlights()  
+        self.clear_all_highlights()
 
         search_term_lower = search_term.strip().lower()
         self._find_results = []
@@ -2696,13 +2684,14 @@ class DialogueEditor(QMainWindow):
                 elif search_type == "Text":
                     match = search_term_lower in node_data.text.lower()
             except AttributeError:
-                logging.warning(f"Attribute error searching node {node_id}. Skipping.")
+                logging.warning(
+                    f"Attribute error searching node {node_id}. Skipping.")
                 continue
             if match:
                 self._find_results.append(node_id)
 
         if self._find_results:
-            self.find_next_node()  
+            self.find_next_node()
 
             for node_id in self._find_results:
                 gnode = self.graphics_nodes.get(node_id)
@@ -2727,7 +2716,7 @@ class DialogueEditor(QMainWindow):
 
     def find_next_node(self):
         if not self._find_results:
-            self.find_node()  
+            self.find_node()
             return
         self._find_index = (self._find_index + 1) % len(self._find_results)
         found_node_id = self._find_results[self._find_index]
@@ -2758,7 +2747,7 @@ class DialogueEditor(QMainWindow):
     def setup_ui(self):
         self.setWindowTitle(config.APP_NAME)
         self.setGeometry(100, 100, 1200, 700)
-        self.statusBar()  
+        self.statusBar()
 
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -2815,17 +2804,13 @@ class DialogueEditor(QMainWindow):
             self.choices_list.focusRequested.connect(self.handle_focus_request)
             self.choices_list.editRequested.connect(self.edit_choice_item_cmd)
             self.choices_list.nextToChoiceRequested.connect(
-                self.handle_next_to_choice_request
-            )
+                self.handle_next_to_choice_request)
             self.choices_list.setContextMenuPolicy(
-                Qt.ContextMenuPolicy.CustomContextMenu
-            )
+                Qt.ContextMenuPolicy.CustomContextMenu)
             self.choices_list.customContextMenuRequested.connect(
-                self.show_choices_context_menu
-            )
+                self.show_choices_context_menu)
             self.choices_list.currentItemChanged.connect(
-                self.handle_current_choice_item_changed
-            )
+                self.handle_current_choice_item_changed)
 
             choice_buttons_layout = QHBoxLayout()
             choice_buttons_layout.addWidget(self.add_choice_button)
@@ -2835,8 +2820,7 @@ class DialogueEditor(QMainWindow):
             choices_layout.addWidget(
                 QLabel(
                     "Connections:\n- Double-Click Choice/Next to Edit.\n- Click Target ID Area to Focus Node."
-                )
-            )  
+                ))
             choices_layout.addWidget(self.choices_list)
             choices_layout.addLayout(choice_buttons_layout)
             choices_layout.addWidget(self.clear_connections_button)
@@ -2844,9 +2828,9 @@ class DialogueEditor(QMainWindow):
             self.add_choice_button.clicked.connect(self.add_choice_dialog)
             self.set_next_button.clicked.connect(self.set_next_node_dialog)
             self.edit_choice_button.clicked.connect(
-                self.handle_edit_choice_button_clicked
-            )
-            self.clear_connections_button.clicked.connect(self.clear_connections_cmd)
+                self.handle_edit_choice_button_clicked)
+            self.clear_connections_button.clicked.connect(
+                self.clear_connections_cmd)
         else:
             error_label = QLabel("Error: Choices list failed to load.")
             choices_layout.addWidget(error_label)
@@ -2863,14 +2847,16 @@ class DialogueEditor(QMainWindow):
             self.view.edgeDragStarted.connect(self.handle_edge_drag_started)
             self.view.edgeDragMoved.connect(self.handle_edge_drag_moved)
             self.view.edgeDragEnded.connect(self.handle_edge_drag_ended)
-            self.view.edgeDragCancelled.connect(self.handle_edge_drag_cancelled)
+            self.view.edgeDragCancelled.connect(
+                self.handle_edge_drag_cancelled)
 
         if hasattr(self, "undo_action") and self.undo_action:
             self.undo_stack.canUndoChanged.connect(self.undo_action.setEnabled)
         if hasattr(self, "redo_action") and self.redo_action:
             self.undo_stack.canRedoChanged.connect(self.redo_action.setEnabled)
         if hasattr(self, "undo_stack"):
-            self.undo_stack.indexChanged.connect(self._handle_undo_stack_change)
+            self.undo_stack.indexChanged.connect(
+                self._handle_undo_stack_change)
 
         self.update_properties_panel()
 
@@ -2942,16 +2928,11 @@ class DialogueEditor(QMainWindow):
         edit_menu.addSeparator()
         add_node_action = QAction("Add &Node", self)
         add_node_action.setShortcut(QKeySequence.StandardKey.New)
-        add_node_action.triggered.connect(
-            lambda: self.add_node_cmd(
-                pos=(
-                    self.view.mapToScene(self.view.viewport().rect().center())
-                    if self.view
-                    else None
-                ),
-                character=self.get_default_character_for_new_node(),
-            )
-        )
+        add_node_action.triggered.connect(lambda: self.add_node_cmd(
+            pos=(self.view.mapToScene(self.view.viewport().rect().center())
+                 if self.view else None),
+            character=self.get_default_character_for_new_node(),
+        ))
         edit_menu.addAction(add_node_action)
         delete_sel_action = QAction("&Delete Selected", self)
         delete_sel_action.setShortcut(QKeySequence.StandardKey.Delete)
@@ -2967,13 +2948,11 @@ class DialogueEditor(QMainWindow):
         view_menu.addSeparator()
         highlight_outgoing_action = QAction("Highlight &Outgoing Path", self)
         highlight_outgoing_action.triggered.connect(
-            lambda: self.highlight_outgoing_path()
-        )
+            lambda: self.highlight_outgoing_path())
         view_menu.addAction(highlight_outgoing_action)
         highlight_incoming_action = QAction("Highlight &Incoming Path", self)
         highlight_incoming_action.triggered.connect(
-            lambda: self.highlight_incoming_path()
-        )
+            lambda: self.highlight_incoming_path())
         view_menu.addAction(highlight_incoming_action)
         clear_highlight_action = QAction("&Clear Highlights", self)
         clear_highlight_action.setShortcut(QKeySequence(Qt.Key.Key_Escape))
@@ -2983,8 +2962,7 @@ class DialogueEditor(QMainWindow):
         layout_action = QAction("Apply Auto-&Layout", self)
         layout_action.setShortcut("Ctrl+R")
         layout_action.setToolTip(
-            "Arrange nodes automatically based on connections (Sugiyama)"
-        )
+            "Arrange nodes automatically based on connections (Sugiyama)")
         layout_action.triggered.connect(self._run_auto_layout)
         view_menu.addAction(layout_action)
         fit_view_action = QAction("&Fit View to Content", self)
@@ -2992,7 +2970,7 @@ class DialogueEditor(QMainWindow):
         fit_view_action.triggered.connect(self._fit_view_after_layout)
         view_menu.addAction(fit_view_action)
 
-        self.update_bookmark_menu()  
+        self.update_bookmark_menu()
 
     def _get_unique_node_id(self, base: str = "node_") -> str:
         max_existing_num = 0
@@ -3002,10 +2980,12 @@ class DialogueEditor(QMainWindow):
                 try:
                     num_part_str = node_id[prefix_len:]
                     if num_part_str.isdigit():
-                        max_existing_num = max(max_existing_num, int(num_part_str))
+                        max_existing_num = max(max_existing_num,
+                                               int(num_part_str))
                 except (ValueError, IndexError):
                     pass
-        self.next_node_id_counter = max(self.next_node_id_counter, max_existing_num + 1)
+        self.next_node_id_counter = max(self.next_node_id_counter,
+                                        max_existing_num + 1)
         new_id = f"{base}{self.next_node_id_counter}"
         while new_id in self.nodes_data:
             self.next_node_id_counter += 1
@@ -3013,7 +2993,8 @@ class DialogueEditor(QMainWindow):
         self.next_node_id_counter += 1
         return new_id
 
-    def _add_node_internal(self, node_data: DialogueNodeData) -> Optional[GraphicsNode]:
+    def _add_node_internal(
+            self, node_data: DialogueNodeData) -> Optional[GraphicsNode]:
         if node_data.id in self.nodes_data:
             logging.error(
                 f"Internal Error: Node ID '{node_data.id}' already exists during _add_node_internal."
@@ -3031,13 +3012,14 @@ class DialogueEditor(QMainWindow):
             if self.scene:
                 self.scene.addItem(graphics_node)
             else:
-                logging.error("Cannot add node graphics: Scene not initialized.")
+                logging.error(
+                    "Cannot add node graphics: Scene not initialized.")
                 return None
 
             self.nodes_data[node_data.id] = node_data
             self.graphics_nodes[node_data.id] = graphics_node
             logging.info(f"Added node '{node_data.id}' internally.")
-            self.update_dynamic_node_visuals(node_data.id)  
+            self.update_dynamic_node_visuals(node_data.id)
             return graphics_node
         except Exception as e:
             logging.exception(
@@ -3051,14 +3033,14 @@ class DialogueEditor(QMainWindow):
 
     def _delete_node_internal(self, node_id_to_delete: str) -> bool:
         if node_id_to_delete not in self.nodes_data:
-            logging.warning(f"Cannot delete non-existent node '{node_id_to_delete}'.")
+            logging.warning(
+                f"Cannot delete non-existent node '{node_id_to_delete}'.")
             return False
         logging.info(f"Deleting node '{node_id_to_delete}' internally...")
 
         graphics_node = self.graphics_nodes.get(node_id_to_delete)
-        edges_to_remove = (
-            self.get_edges_for_node(graphics_node) if graphics_node else []
-        )
+        edges_to_remove = (self.get_edges_for_node(graphics_node)
+                           if graphics_node else [])
         logging.debug(
             f"Removing {len(edges_to_remove)} edges connected to '{node_id_to_delete}'."
         )
@@ -3115,8 +3097,7 @@ class DialogueEditor(QMainWindow):
                     f"Attempting to set fallback start node to '{new_start_id}'."
                 )
                 if not self._set_start_node_internal(
-                    self.graphics_nodes[new_start_id], force=True
-                ):
+                        self.graphics_nodes[new_start_id], force=True):
                     logging.warning(
                         f"Failed to set fallback start node '{new_start_id}' after deleting original."
                     )
@@ -3125,7 +3106,8 @@ class DialogueEditor(QMainWindow):
                     "Could not set fallback start node: No graphics item found."
                 )
             else:
-                logging.info("No remaining nodes to set as start node after deletion.")
+                logging.info(
+                    "No remaining nodes to set as start node after deletion.")
 
         if node_id_to_delete in self.bookmarks:
             self.bookmarks.discard(node_id_to_delete)
@@ -3134,10 +3116,11 @@ class DialogueEditor(QMainWindow):
         logging.info(f"Successfully deleted node '{node_id_to_delete}'.")
         return True
 
-    def _set_start_node_internal(
-        self, graphics_node_to_set: GraphicsNode, force: bool = False
-    ) -> bool:
-        if not graphics_node_to_set or not hasattr(graphics_node_to_set, "node_data"):
+    def _set_start_node_internal(self,
+                                 graphics_node_to_set: GraphicsNode,
+                                 force: bool = False) -> bool:
+        if not graphics_node_to_set or not hasattr(graphics_node_to_set,
+                                                   "node_data"):
             logging.error("Invalid node provided to _set_start_node_internal.")
             return False
 
@@ -3164,14 +3147,13 @@ class DialogueEditor(QMainWindow):
             logging.info(
                 f"Start node requires rename: '{new_start_original_id}' -> '{target_start_id}'"
             )
-            if not self._handle_start_node_conflict(
-                node_to_operate_on, target_start_id
-            ):
+            if not self._handle_start_node_conflict(node_to_operate_on,
+                                                    target_start_id):
                 return False
 
-            if not self._perform_node_rename_internal(
-                node_to_operate_on, new_start_original_id, target_start_id
-            ):
+            if not self._perform_node_rename_internal(node_to_operate_on,
+                                                      new_start_original_id,
+                                                      target_start_id):
                 return False
             final_id_after_rename = target_start_id
 
@@ -3198,20 +3180,17 @@ class DialogueEditor(QMainWindow):
                 f"Could not update data/visuals for new start node '{self.start_node_id}'."
             )
 
-        logging.info(f"Internal start node set successfully to '{self.start_node_id}'.")
-        self.redraw_all_edges()  
+        logging.info(
+            f"Internal start node set successfully to '{self.start_node_id}'.")
+        self.redraw_all_edges()
         return True
 
-    def _handle_start_node_conflict(
-        self, node_to_set: GraphicsNode, target_id: str = "start"
-    ) -> bool:
+    def _handle_start_node_conflict(self,
+                                    node_to_set: GraphicsNode,
+                                    target_id: str = "start") -> bool:
         existing_data = self.nodes_data.get(target_id)
-        if (
-            existing_data
-            and node_to_set
-            and hasattr(node_to_set, "node_data")
-            and existing_data != node_to_set.node_data
-        ):
+        if (existing_data and node_to_set and hasattr(node_to_set, "node_data")
+                and existing_data != node_to_set.node_data):
             QMessageBox.critical(
                 self,
                 "ID Conflict",
@@ -3226,7 +3205,8 @@ class DialogueEditor(QMainWindow):
     def _unset_start_node_visuals(self, node_id_to_unset: Optional[str]):
         if not node_id_to_unset:
             return
-        logging.debug(f"Unsetting start node visuals/flag for '{node_id_to_unset}'.")
+        logging.debug(
+            f"Unsetting start node visuals/flag for '{node_id_to_unset}'.")
         if node_id_to_unset in self.nodes_data:
             self.nodes_data[node_id_to_unset].is_start_node = False
         gnode = self.graphics_nodes.get(node_id_to_unset)
@@ -3235,19 +3215,17 @@ class DialogueEditor(QMainWindow):
                 gnode.node_data.is_start_node = False
             gnode.update()
 
-    def _perform_node_rename_internal(
-        self, gnode_to_rename: GraphicsNode, old_id: str, new_id: str
-    ) -> bool:
+    def _perform_node_rename_internal(self, gnode_to_rename: GraphicsNode,
+                                      old_id: str, new_id: str) -> bool:
         if old_id == new_id:
-            return True  
+            return True
 
         if not new_id or not isinstance(new_id, str) or " " in new_id.strip():
             logging.error(
                 f"Invalid new node ID '{new_id}'. Cannot be empty or contain spaces."
             )
-            QMessageBox.warning(
-                self, "Invalid ID", "Node ID cannot be empty or contain spaces."
-            )
+            QMessageBox.warning(self, "Invalid ID",
+                                "Node ID cannot be empty or contain spaces.")
             return False
         new_id = new_id.strip()
 
@@ -3260,22 +3238,18 @@ class DialogueEditor(QMainWindow):
 
                 if self.graphics_nodes.get(new_id) is not gnode_to_rename:
                     self.graphics_nodes[new_id] = gnode_to_rename
-                if (
-                    old_id != new_id
-                    and old_id in self.graphics_nodes
-                    and self.graphics_nodes[old_id] == gnode_to_rename
-                ):
+                if (old_id != new_id and old_id in self.graphics_nodes
+                        and self.graphics_nodes[old_id] == gnode_to_rename):
                     del self.graphics_nodes[old_id]
                 if self.start_node_id == old_id:
-                    self.start_node_id = new_id  
+                    self.start_node_id = new_id
                 return True
             else:
                 logging.error(
                     f"Rename target ID '{new_id}' already exists and belongs to a different node."
                 )
-                QMessageBox.critical(
-                    self, "Rename Failed", f"Node ID '{new_id}' already exists."
-                )
+                QMessageBox.critical(self, "Rename Failed",
+                                     f"Node ID '{new_id}' already exists.")
                 return False
 
         if old_id not in self.nodes_data or old_id not in self.graphics_nodes:
@@ -3301,7 +3275,7 @@ class DialogueEditor(QMainWindow):
             references_updated_count = 0
             for other_id, other_data in self.nodes_data.items():
                 if other_id == new_id:
-                    continue  
+                    continue
                 connection_updated = False
 
                 if other_data.next_node == old_id:
@@ -3323,9 +3297,7 @@ class DialogueEditor(QMainWindow):
                             logging.warning(
                                 f"Skipping invalid choice tuple {choice_tuple} in node {other_id} during rename."
                             )
-                            new_choices.append(
-                                choice_tuple
-                            )  
+                            new_choices.append(choice_tuple)
                     if choice_list_changed:
                         other_data.choices = new_choices
                         connection_updated = True
@@ -3371,11 +3343,12 @@ class DialogueEditor(QMainWindow):
                     self.graphics_nodes[old_id] = rolled_back_gnode
 
                 if hasattr(
-                    gnode_to_rename, "node_data"
+                        gnode_to_rename, "node_data"
                 ) and gnode_to_rename.node_data == self.nodes_data.get(old_id):
                     gnode_to_rename.node_data.id = old_id
-                elif old_id in self.nodes_data and self.graphics_nodes.get(old_id):
-                    self.graphics_nodes[old_id].node_data.id = old_id  
+                elif old_id in self.nodes_data and self.graphics_nodes.get(
+                        old_id):
+                    self.graphics_nodes[old_id].node_data.id = old_id
 
                 if self.start_node_id == new_id:
                     self.start_node_id = old_id
@@ -3415,12 +3388,14 @@ class DialogueEditor(QMainWindow):
         if node_id is None or not node_id.strip():
             final_node_id = self._get_unique_node_id()
             is_new_id_generated = True
-            logging.info(f"No/empty node ID provided, generated: '{final_node_id}'")
+            logging.info(
+                f"No/empty node ID provided, generated: '{final_node_id}'")
         else:
             final_node_id = node_id.strip()
             if final_node_id in self.nodes_data:
                 conflict_base = final_node_id
-                final_node_id = self._get_unique_node_id(base=final_node_id + "_")
+                final_node_id = self._get_unique_node_id(base=final_node_id +
+                                                         "_")
                 is_new_id_generated = True
                 logging.warning(
                     f"Provided node ID '{conflict_base}' already exists. Generated unique ID: '{final_node_id}'"
@@ -3430,12 +3405,11 @@ class DialogueEditor(QMainWindow):
                     "ID Conflict",
                     f"Node ID '{conflict_base}' already exists.\nUsing generated ID: '{final_node_id}'",
                 )
-            elif (
-                final_node_id == config.START_NODE_EXPORT_ID
-                and config.START_NODE_EXPORT_ID in self.nodes_data
-            ):
+            elif (final_node_id == config.START_NODE_EXPORT_ID
+                  and config.START_NODE_EXPORT_ID in self.nodes_data):
                 conflict_base = final_node_id
-                final_node_id = self._get_unique_node_id(base=final_node_id + "_")
+                final_node_id = self._get_unique_node_id(base=final_node_id +
+                                                         "_")
                 is_new_id_generated = True
                 logging.warning(
                     f"Cannot add node explicitly named '{conflict_base}'. Generated unique ID: '{final_node_id}'"
@@ -3451,7 +3425,8 @@ class DialogueEditor(QMainWindow):
             max_y = 50.0
             center_x = 100.0
             if self.view:
-                view_center = self.view.mapToScene(self.view.viewport().rect().center())
+                view_center = self.view.mapToScene(
+                    self.view.viewport().rect().center())
                 center_x = view_center.x()
 
             if self.graphics_nodes:
@@ -3465,7 +3440,8 @@ class DialogueEditor(QMainWindow):
             final_pos_y = max(50.0, max_y + v_spacing)
             final_pos_x = center_x - (node_width / 2.0)
             final_pos = QPointF(final_pos_x, final_pos_y)
-            logging.debug(f"Calculated node position (below existing): {final_pos}")
+            logging.debug(
+                f"Calculated node position (below existing): {final_pos}")
 
         try:
             node_data = DialogueNodeData(
@@ -3479,9 +3455,8 @@ class DialogueEditor(QMainWindow):
             logging.exception(
                 f"Failed to create DialogueNodeData for '{final_node_id}': {e}"
             )
-            QMessageBox.critical(
-                self, "Add Node Failed", f"Error creating node data:\n{e}"
-            )
+            QMessageBox.critical(self, "Add Node Failed",
+                                 f"Error creating node data:\n{e}")
             return
 
         cmd = AddNodeCommand(node_data, self)
@@ -3511,32 +3486,24 @@ class DialogueEditor(QMainWindow):
         self._check_pending_custom_prop_changes()
         nodes = self.get_selected_nodes()
         edges = self.get_selected_edges()
-        groups = self.get_selected_visual_groups()
 
-        if not nodes and not edges and not groups:
+        if not nodes and not edges:
             return
 
         n_ids = [n.node_data.id for n in nodes if hasattr(n, "node_data")]
         e_desc = []
         for e in edges:
-            s_id = (
-                e.source.node_data.id
-                if e.source and hasattr(e.source, "node_data")
-                else "?"
-            )
-            d_id = (
-                e.dest.node_data.id if e.dest and hasattr(e.dest, "node_data") else "?"
-            )
+            s_id = (e.source.node_data.id
+                    if e.source and hasattr(e.source, "node_data") else "?")
+            d_id = (e.dest.node_data.id
+                    if e.dest and hasattr(e.dest, "node_data") else "?")
             e_desc.append(f"{s_id}->{d_id}")
-        g_labels = [g.label for g in groups]
 
         msg = "Delete selected items?\n"
         if n_ids:
             msg += f"\nNodes: {', '.join(n_ids)}"
         if e_desc:
             msg += f"\nConnections: {', '.join(e_desc)}"
-        if g_labels:
-            msg += f"\nGroups: {', '.join(g_labels)}"
 
         reply = QMessageBox.question(
             self,
@@ -3550,7 +3517,6 @@ class DialogueEditor(QMainWindow):
 
         self.undo_stack.beginMacro("Delete Selected Items")
         try:
-
             for edge in edges:
                 if edge in self.graphics_edges:
                     self.undo_stack.push(DeleteEdgeCommand(edge, self))
@@ -3561,12 +3527,12 @@ class DialogueEditor(QMainWindow):
 
             for node in nodes:
                 if node.node_data.id in self.nodes_data:
-                    self.undo_stack.push(DeleteNodeCommand(node.node_data.id, self))
+                    self.undo_stack.push(
+                        DeleteNodeCommand(node.node_data.id, self))
                 else:
                     logging.warning(
                         f"Skipping delete command for node {node.node_data.id} as it's no longer in nodes_data."
                     )
-
         finally:
             self.undo_stack.endMacro()
 
@@ -3587,8 +3553,9 @@ class DialogueEditor(QMainWindow):
                     logging.info(
                         f"Node '{new_id}' is start, pushing rename to '{target_id}'."
                     )
-                    self.undo_stack.push(RenameNodeIdCommand(new_id, target_id, self))
-            return  
+                    self.undo_stack.push(
+                        RenameNodeIdCommand(new_id, target_id, self))
+            return
 
         if new_id != target_id:
             if not self._handle_start_node_conflict(graphics_node, target_id):
@@ -3597,7 +3564,8 @@ class DialogueEditor(QMainWindow):
                 )
                 return
 
-        logging.info(f"Pushing SetStartNodeCommand: New='{new_id}', Old='{old_id}'")
+        logging.info(
+            f"Pushing SetStartNodeCommand: New='{new_id}', Old='{old_id}'")
         self.undo_stack.push(SetStartNodeCommand(new_id, old_id, self))
 
     def clear_connections_cmd(self):
@@ -3613,7 +3581,8 @@ class DialogueEditor(QMainWindow):
                 f"Node '{data.id}' already has no connections. Clear command ignored."
             )
             return
-        cmd = ClearConnectionsCommand(data.id, data.next_node, list(data.choices), self)
+        cmd = ClearConnectionsCommand(data.id, data.next_node,
+                                      list(data.choices), self)
         self.undo_stack.push(cmd)
 
     def delete_edge_cmd(self, edge: GraphicsEdge):
@@ -3634,18 +3603,16 @@ class DialogueEditor(QMainWindow):
             return
         self.node_id_edit.setText(node_data.id)
         self.node_id_edit.setReadOnly(
-            node_data.id == config.START_NODE_EXPORT_ID
-        )  
+            node_data.id == config.START_NODE_EXPORT_ID)
         self.node_char_edit.setText(node_data.character)
         if self.node_text_edit.toPlainText() != node_data.text:
-            self.node_text_edit.setPlainText(
-                node_data.text
-            )  
+            self.node_text_edit.setPlainText(node_data.text)
         self._original_node_id = node_data.id
         self._original_node_char = node_data.character
         self._original_node_text = node_data.text
 
-    def _update_properties_custom_fields(self, node_data: Optional[DialogueNodeData]):
+    def _update_properties_custom_fields(
+            self, node_data: Optional[DialogueNodeData]):
         if self.custom_props_form_layout is None:
             logging.error(
                 "Cannot update custom props: custom_props_form_layout is None."
@@ -3658,17 +3625,17 @@ class DialogueEditor(QMainWindow):
         self._original_custom_props.clear()
 
         if node_data is None:
-            return  
+            return
 
-        for internal_key, prop_config in config.ALLOWED_CUSTOM_PROPERTIES.items():
+        for internal_key, prop_config in config.ALLOWED_CUSTOM_PROPERTIES.items(
+        ):
             display_name = prop_config.get("display", internal_key)
             current_value_str = ""
             if isinstance(node_data.custom_data, dict):
                 current_value = node_data.custom_data.get(
-                    internal_key, prop_config.get("default", "")
-                )
+                    internal_key, prop_config.get("default", ""))
                 current_value_str = str(current_value)
-            else:  
+            else:
                 logging.warning(
                     f"Node '{node_data.id}' has invalid custom_data type. Resetting."
                 )
@@ -3680,15 +3647,15 @@ class DialogueEditor(QMainWindow):
             label = QLabel(f"{display_name}:")
             line_edit = QLineEdit()
             line_edit.setText(current_value_str)
-            line_edit.setProperty("internal_key", internal_key)  
-            line_edit.editingFinished.connect(self.handle_defined_custom_prop_change)
+            line_edit.setProperty("internal_key", internal_key)
+            line_edit.editingFinished.connect(
+                self.handle_defined_custom_prop_change)
 
             self.custom_props_form_layout.addRow(label, line_edit)
             self._custom_prop_edits[internal_key] = line_edit
 
     def _update_properties_connections_list(
-        self, node_data: Optional[DialogueNodeData]
-    ):
+            self, node_data: Optional[DialogueNodeData]):
         if self.choices_list is None:
             logging.error(
                 "CRITICAL: self.choices_list object is None, cannot update list widget."
@@ -3718,14 +3685,14 @@ class DialogueEditor(QMainWindow):
             f"Populating list for node '{node_data.id}'. Next: {node_data.next_node}, Choices: {node_data.choices}"
         )
 
-        missing_link_color = getattr(
-            config, "MISSING_LINK_TEXT_COLOR", QColor("orange")
-        )
-        implicit_loop_color = getattr(config, "NODE_LOOP_COLOR", QColor(100, 100, 0))
-        next_link_color = getattr(config, "NEXT_LINK_TEXT_COLOR", QColor(180, 180, 255))
-        default_choice_color = getattr(
-            config, "DEFAULT_CHOICE_TEXT_COLOR", QColor(220, 220, 220)
-        )
+        missing_link_color = getattr(config, "MISSING_LINK_TEXT_COLOR",
+                                     QColor("orange"))
+        implicit_loop_color = getattr(config, "NODE_LOOP_COLOR",
+                                      QColor(100, 100, 0))
+        next_link_color = getattr(config, "NEXT_LINK_TEXT_COLOR",
+                                  QColor(180, 180, 255))
+        default_choice_color = getattr(config, "DEFAULT_CHOICE_TEXT_COLOR",
+                                       QColor(220, 220, 220))
 
         has_explicit_connection = False
         if node_data.next_node is not None:
@@ -3735,19 +3702,20 @@ class DialogueEditor(QMainWindow):
             if not target_exists:
                 item_text += " (Missing!)"
             item = QListWidgetItem(item_text)
-            item.setForeground(next_link_color if target_exists else missing_link_color)
-            item.setData(Qt.ItemDataRole.UserRole, (config.CONN_TYPE_NEXT, target_id))
-            item.setFlags(
-                item.flags()
-                & ~Qt.ItemFlag.ItemIsSelectable
-                & ~Qt.ItemFlag.ItemIsEditable
-            )
+            item.setForeground(
+                next_link_color if target_exists else missing_link_color)
+            item.setData(Qt.ItemDataRole.UserRole,
+                         (config.CONN_TYPE_NEXT, target_id))
+            item.setFlags(item.flags()
+                          & ~Qt.ItemFlag.ItemIsSelectable
+                          & ~Qt.ItemFlag.ItemIsEditable)
             self.choices_list.addItem(item)
             has_explicit_connection = True
         elif node_data.choices:
             if isinstance(node_data.choices, list):
                 for i, choice_data in enumerate(node_data.choices):
-                    if isinstance(choice_data, (list, tuple)) and len(choice_data) == 3:
+                    if isinstance(choice_data,
+                                  (list, tuple)) and len(choice_data) == 3:
                         ct, tid, pre = choice_data
                         target_exists = tid in self.nodes_data
                         pre_str = f" [{pre}]" if pre and pre != "None" else ""
@@ -3757,13 +3725,11 @@ class DialogueEditor(QMainWindow):
                         item = QListWidgetItem(item_text)
                         item.setForeground(
                             default_choice_color
-                            if target_exists
-                            else missing_link_color
-                        )
+                            if target_exists else missing_link_color)
                         item.setData(
                             Qt.ItemDataRole.UserRole,
                             (config.CONN_TYPE_CHOICE, ct, tid, pre, i),
-                        )  
+                        )
                         self.choices_list.addItem(item)
                         has_explicit_connection = True
                     else:
@@ -3776,9 +3742,8 @@ class DialogueEditor(QMainWindow):
                 )
 
         is_end_node = not has_explicit_connection
-        is_not_start_node = (
-            self.start_node_id is not None and node_data.id != self.start_node_id
-        )
+        is_not_start_node = (self.start_node_id is not None
+                             and node_data.id != self.start_node_id)
         if is_end_node and is_not_start_node:
             target_id = self.start_node_id
             target_exists = target_id in self.nodes_data
@@ -3787,16 +3752,12 @@ class DialogueEditor(QMainWindow):
                 item_text += " (Missing!)"
             item = QListWidgetItem(item_text)
             item.setForeground(
-                implicit_loop_color if target_exists else missing_link_color
-            )
-            item.setData(
-                Qt.ItemDataRole.UserRole, (config.CONN_TYPE_IMPLICIT_LOOP, target_id)
-            )
-            item.setFlags(
-                item.flags()
-                & ~Qt.ItemFlag.ItemIsSelectable
-                & ~Qt.ItemFlag.ItemIsEditable
-            )
+                implicit_loop_color if target_exists else missing_link_color)
+            item.setData(Qt.ItemDataRole.UserRole,
+                         (config.CONN_TYPE_IMPLICIT_LOOP, target_id))
+            item.setFlags(item.flags()
+                          & ~Qt.ItemFlag.ItemIsSelectable
+                          & ~Qt.ItemFlag.ItemIsEditable)
             self.choices_list.addItem(item)
             logging.debug(f"  Added IMPLICIT LOOP item: {item_text}")
 
@@ -3809,7 +3770,8 @@ class DialogueEditor(QMainWindow):
         if self.clear_connections_button:
             self.clear_connections_button.setEnabled(has_explicit_connection)
 
-        self.handle_current_choice_item_changed(self.choices_list.currentItem(), None)
+        self.handle_current_choice_item_changed(
+            self.choices_list.currentItem(), None)
         logging.debug(
             f" Finished updating connections list for '{node_data.id}'. Items: {self.choices_list.count()}"
         )
@@ -3824,7 +3786,7 @@ class DialogueEditor(QMainWindow):
                     "update_properties_panel: Essential components (scene/props/choices) are None, skipping update."
                 )
                 return
-            scene.sceneRect()  
+            scene.sceneRect()
             props_widget.isEnabled()
             choices_list.count()
         except RuntimeError as e:
@@ -3856,7 +3818,7 @@ class DialogueEditor(QMainWindow):
             )
             return
         try:
-            scene.sceneRect()  
+            scene.sceneRect()
         except RuntimeError as e:
             if "deleted" in str(e).lower():
                 logging.debug(
@@ -3866,7 +3828,8 @@ class DialogueEditor(QMainWindow):
             else:
                 raise
         except Exception as e:
-            logging.exception(f"Unexpected error re-checking scene validity: {e}")
+            logging.exception(
+                f"Unexpected error re-checking scene validity: {e}")
             return
 
         is_node_selected = selected_node is not None
@@ -3875,18 +3838,12 @@ class DialogueEditor(QMainWindow):
             self.props_widget.setEnabled(is_node_selected)
         if hasattr(self, "custom_props_group") and self.custom_props_group:
             self.custom_props_group.setEnabled(
-                is_node_selected and bool(config.ALLOWED_CUSTOM_PROPERTIES)
-            )
+                is_node_selected and bool(config.ALLOWED_CUSTOM_PROPERTIES))
         if hasattr(self, "choices_list") and self.choices_list:
             self.choices_list.setEnabled(is_node_selected)
-        if (
-            hasattr(self, "edit_choice_button")
-            and self.edit_choice_button
-            and not is_node_selected
-        ):
-            self.edit_choice_button.setEnabled(
-                False
-            )  
+        if (hasattr(self, "edit_choice_button") and self.edit_choice_button
+                and not is_node_selected):
+            self.edit_choice_button.setEnabled(False)
 
         if not is_node_selected:
 
@@ -3918,7 +3875,7 @@ class DialogueEditor(QMainWindow):
             node_data = selected_node.node_data
             if not node_data:
                 logging.error("Selected node has no node_data attribute!")
-                return  
+                return
 
             self._update_properties_node_fields(node_data)
             self._update_properties_custom_fields(node_data)
@@ -3956,13 +3913,12 @@ class DialogueEditor(QMainWindow):
             self.node_id_edit.setText(old_id)
             return
         if " " in new_id:
-            QMessageBox.warning(self, "Invalid ID", "Node ID cannot contain spaces.")
+            QMessageBox.warning(self, "Invalid ID",
+                                "Node ID cannot contain spaces.")
             self.node_id_edit.setText(old_id)
             return
-        if (
-            new_id == config.START_NODE_EXPORT_ID
-            and old_id != config.START_NODE_EXPORT_ID
-        ):
+        if (new_id == config.START_NODE_EXPORT_ID
+                and old_id != config.START_NODE_EXPORT_ID):
             QMessageBox.warning(
                 self,
                 "Invalid Rename",
@@ -3972,18 +3928,13 @@ class DialogueEditor(QMainWindow):
             return
         if new_id == old_id:
             if new_id_raw != new_id:
-                self.node_id_edit.setText(
-                    new_id
-                )  
+                self.node_id_edit.setText(new_id)
             return
 
-        if (
-            new_id in self.nodes_data
-            and self.nodes_data[new_id] != selected_node.node_data
-        ):
-            QMessageBox.warning(
-                self, "ID Conflict", f"Node ID '{new_id}' already exists."
-            )
+        if (new_id in self.nodes_data
+                and self.nodes_data[new_id] != selected_node.node_data):
+            QMessageBox.warning(self, "ID Conflict",
+                                f"Node ID '{new_id}' already exists.")
             self.node_id_edit.setText(old_id)
             return
 
@@ -4007,12 +3958,10 @@ class DialogueEditor(QMainWindow):
             return
 
         new_value_str = sender_widget.text()
-        old_value_str = self._original_custom_props.get(
-            internal_key
-        )  
+        old_value_str = self._original_custom_props.get(internal_key)
 
         expected_type_str = prop_config.get("type", "string").lower()
-        validated_new_value = new_value_str  
+        validated_new_value = new_value_str
         is_valid = True
         try:
             if expected_type_str == "int":
@@ -4035,8 +3984,7 @@ class DialogueEditor(QMainWindow):
                 f"Value '{new_value_str}' is not a valid {expected_type_str} for property '{prop_config.get('display', internal_key)}'.",
             )
             sender_widget.setText(
-                old_value_str if old_value_str is not None else ""
-            )  
+                old_value_str if old_value_str is not None else "")
 
         if not is_valid:
             return
@@ -4046,7 +3994,8 @@ class DialogueEditor(QMainWindow):
                 f"Custom prop '{internal_key}' changed: '{old_value_str}' -> '{new_value_str}' (Validated: {validated_new_value})"
             )
 
-            original_value_typed = selected_node.node_data.custom_data.get(internal_key)
+            original_value_typed = selected_node.node_data.custom_data.get(
+                internal_key)
             cmd = SetCustomPropertyCommand(
                 selected_node.node_data.id,
                 internal_key,
@@ -4075,17 +4024,18 @@ class DialogueEditor(QMainWindow):
                 logging.info(
                     f"Pending change detected for custom prop '{internal_key}'. Triggering save."
                 )
-                widget.editingFinished.emit()  
+                widget.editingFinished.emit()
                 needs_update = True
 
     def _select_target_node_dialog(
-        self, title: str, current_target: Optional[str] = None
-    ) -> Optional[str]:
+            self,
+            title: str,
+            current_target: Optional[str] = None) -> Optional[str]:
         selected_node = self.get_selected_node()
         if not selected_node:
             return None
         current_node_id = selected_node.node_data.id
-        current_character = selected_node.node_data.character  
+        current_character = selected_node.node_data.character
 
         existing_ids = sorted(list(self.nodes_data.keys()))
         create_new_option = "[Create New Node]"
@@ -4096,11 +4046,12 @@ class DialogueEditor(QMainWindow):
             try:
                 current_index = target_options.index(current_target)
             except ValueError:
-                pass  
+                pass
 
-        target_id_str, ok = QInputDialog.getItem(
-            self, title, "Select Target Node ID:", target_options, current_index, False
-        )
+        target_id_str, ok = QInputDialog.getItem(self, title,
+                                                 "Select Target Node ID:",
+                                                 target_options, current_index,
+                                                 False)
 
         if not ok or not target_id_str:
             return None
@@ -4115,8 +4066,9 @@ class DialogueEditor(QMainWindow):
             while attempts < max_attempts:
                 too_close = False
                 for other_gnode in self.graphics_nodes.values():
-                    if QLineF(other_gnode.scenePos(), new_node_pos).length() < 1.0:
-                        new_node_pos += QPointF(20, 20)  
+                    if QLineF(other_gnode.scenePos(),
+                              new_node_pos).length() < 1.0:
+                        new_node_pos += QPointF(20, 20)
                         too_close = True
                         break
                 if not too_close:
@@ -4129,9 +4081,9 @@ class DialogueEditor(QMainWindow):
 
             new_node_id = self._get_unique_node_id()
 
-            self.add_node_cmd(
-                node_id=new_node_id, pos=new_node_pos, character=current_character
-            )
+            self.add_node_cmd(node_id=new_node_id,
+                              pos=new_node_pos,
+                              character=current_character)
 
             if new_node_id in self.nodes_data:
                 return new_node_id
@@ -4139,7 +4091,8 @@ class DialogueEditor(QMainWindow):
                 logging.error(
                     "Failed to add new node via command in _select_target_node_dialog."
                 )
-                QMessageBox.critical(self, "Error", "Failed to create the new node.")
+                QMessageBox.critical(self, "Error",
+                                     "Failed to create the new node.")
                 return None
         else:
             return target_id_str
@@ -4171,21 +4124,21 @@ class DialogueEditor(QMainWindow):
         choice_text = choice_text_raw.strip()
 
         target_id = self._select_target_node_dialog(
-            f"Target Node for Choice '{choice_text}'"
-        )
+            f"Target Node for Choice '{choice_text}'")
         if not target_id:
             return
 
         preset_names = list(config.PRESETS.keys())
-        preset_name, ok3 = QInputDialog.getItem(
-            self, "Select Preset", "UI Preset:", preset_names, 0, False
-        )
+        preset_name, ok3 = QInputDialog.getItem(self, "Select Preset",
+                                                "UI Preset:", preset_names, 0,
+                                                False)
         if not ok3:
-            preset_name = "None"  
+            preset_name = "None"
 
         final_choice_text = choice_text if choice_text else config.DEFAULT_CHOICE_TEXT
 
-        cmd = AddChoiceCommand(node_id, final_choice_text, target_id, preset_name, self)
+        cmd = AddChoiceCommand(node_id, final_choice_text, target_id,
+                               preset_name, self)
         self.undo_stack.push(cmd)
 
     def set_next_node_dialog(self):
@@ -4207,12 +4160,9 @@ class DialogueEditor(QMainWindow):
 
         current_target = selected_node.node_data.next_node
         target_id = self._select_target_node_dialog(
-            "Select 'Next' Target Node", current_target=current_target
-        )
+            "Select 'Next' Target Node", current_target=current_target)
         if not target_id:
             return
-
-
 
         cmd = SetNextNodeCommand(node_id, target_id, self)
         self.undo_stack.push(cmd)
@@ -4220,9 +4170,8 @@ class DialogueEditor(QMainWindow):
     def link_selected_nodes_cmd(self):
         selected = self.get_selected_nodes()
         if len(selected) != 2:
-            QMessageBox.warning(
-                self, "Link Nodes Error", "Please select exactly two nodes to link."
-            )
+            QMessageBox.warning(self, "Link Nodes Error",
+                                "Please select exactly two nodes to link.")
             return
         self._push_text_edit_command()
         self._push_char_edit_command()
@@ -4234,9 +4183,8 @@ class DialogueEditor(QMainWindow):
         elif node2.pos().y() < node1.pos().y() - 10:
             source_node, dest_node = node2, node1
         else:
-            source_node, dest_node = (
-                (node1, node2) if node1.pos().x() <= node2.pos().x() else (node2, node1)
-            )
+            source_node, dest_node = ((node1, node2) if node1.pos().x()
+                                      <= node2.pos().x() else (node2, node1))
 
         source_id = source_node.node_data.id
         dest_id = dest_node.node_data.id
@@ -4259,15 +4207,16 @@ class DialogueEditor(QMainWindow):
         choice_text = choice_text_raw.strip()
 
         preset_names = list(config.PRESETS.keys())
-        preset_name, ok_p = QInputDialog.getItem(
-            self, "Select Preset", "UI Preset:", preset_names, 0, False
-        )
+        preset_name, ok_p = QInputDialog.getItem(self, "Select Preset",
+                                                 "UI Preset:", preset_names, 0,
+                                                 False)
         if not ok_p:
             preset_name = "None"
 
         final_choice_text = choice_text if choice_text else config.DEFAULT_CHOICE_TEXT
 
-        cmd = AddChoiceCommand(source_id, final_choice_text, dest_id, preset_name, self)
+        cmd = AddChoiceCommand(source_id, final_choice_text, dest_id,
+                               preset_name, self)
         self.undo_stack.push(cmd)
 
     def show_choices_context_menu(self, pos: QPoint):
@@ -4300,7 +4249,8 @@ class DialogueEditor(QMainWindow):
 
                     choice_tuple = (item_data[1], item_data[2], item_data[3])
                     original_index = item_data[4]
-                    if not isinstance(original_index, int) or original_index < 0:
+                    if not isinstance(original_index,
+                                      int) or original_index < 0:
                         raise ValueError("Invalid index stored")
                     cmd = RemoveChoiceCommand(
                         selected_node_in_panel.node_data.id,
@@ -4310,8 +4260,10 @@ class DialogueEditor(QMainWindow):
                     )
                     self.undo_stack.push(cmd)
                 except (IndexError, ValueError, TypeError) as e:
-                    logging.exception(f"Error preparing remove choice command: {e}")
-                    QMessageBox.warning(self, "Error", f"Could not remove choice: {e}")
+                    logging.exception(
+                        f"Error preparing remove choice command: {e}")
+                    QMessageBox.warning(self, "Error",
+                                        f"Could not remove choice: {e}")
             elif action == edit_action:
                 self.edit_choice_item_cmd(item)
             elif action == focus_action:
@@ -4319,13 +4271,10 @@ class DialogueEditor(QMainWindow):
                     self.handle_focus_request(item_data[2])
                 except IndexError:
                     logging.warning(
-                        "Could not get target ID from choice item for focus."
-                    )
+                        "Could not get target ID from choice item for focus.")
 
-        elif (
-            connection_type == config.CONN_TYPE_NEXT
-            or connection_type == config.CONN_TYPE_IMPLICIT_LOOP
-        ):
+        elif (connection_type == config.CONN_TYPE_NEXT
+              or connection_type == config.CONN_TYPE_IMPLICIT_LOOP):
             focus_action = menu.addAction("Focus Target Node")
             clear_next_action = None
             if connection_type == config.CONN_TYPE_NEXT:
@@ -4337,14 +4286,14 @@ class DialogueEditor(QMainWindow):
                 try:
                     self.handle_focus_request(item_data[1])
                 except IndexError:
-                    logging.warning("Could not get target ID from item for focus.")
+                    logging.warning(
+                        "Could not get target ID from item for focus.")
             elif action == clear_next_action:
                 self._push_text_edit_command()
                 self._push_char_edit_command()
                 self._check_pending_custom_prop_changes()
-                cmd = SetNextNodeCommand(
-                    selected_node_in_panel.node_data.id, None, self
-                )
+                cmd = SetNextNodeCommand(selected_node_in_panel.node_data.id,
+                                         None, self)
                 self.undo_stack.push(cmd)
 
     def handle_focus_request(self, target_id: str):
@@ -4361,9 +4310,8 @@ class DialogueEditor(QMainWindow):
             logging.warning(
                 f"Focus target node '{target_id}' not found in graphics_nodes."
             )
-            QMessageBox.warning(
-                self, "Focus Error", f"Node '{target_id}' not found in the scene."
-            )
+            QMessageBox.warning(self, "Focus Error",
+                                f"Node '{target_id}' not found in the scene.")
 
     def handle_current_choice_item_changed(
         self,
@@ -4373,11 +4321,8 @@ class DialogueEditor(QMainWindow):
         can_edit = False
         if current_item:
             item_data = current_item.data(Qt.ItemDataRole.UserRole)
-            if (
-                item_data
-                and isinstance(item_data, (list, tuple))
-                and item_data[0] == config.CONN_TYPE_CHOICE
-            ):
+            if (item_data and isinstance(item_data, (list, tuple))
+                    and item_data[0] == config.CONN_TYPE_CHOICE):
                 can_edit = True
         if self.edit_choice_button:
             self.edit_choice_button.setEnabled(can_edit)
@@ -4390,8 +4335,8 @@ class DialogueEditor(QMainWindow):
             self.edit_choice_item_cmd(current_item)
         else:
             QMessageBox.information(
-                self, "Edit Choice", "Please select a choice from the list to edit."
-            )
+                self, "Edit Choice",
+                "Please select a choice from the list to edit.")
 
     def edit_choice_item_cmd(self, item: QListWidgetItem):
         selected_node = self.get_selected_node()
@@ -4403,22 +4348,17 @@ class DialogueEditor(QMainWindow):
         self._check_pending_custom_prop_changes()
 
         item_data = item.data(Qt.ItemDataRole.UserRole)
-        if (
-            not item_data
-            or not isinstance(item_data, (list, tuple))
-            or len(item_data) != 5
-            or item_data[0] != config.CONN_TYPE_CHOICE
-        ):
+        if (not item_data or not isinstance(item_data, (list, tuple))
+                or len(item_data) != 5
+                or item_data[0] != config.CONN_TYPE_CHOICE):
             logging.warning(
-                "Attempted to edit non-choice item or item with invalid data."
-            )
+                "Attempted to edit non-choice item or item with invalid data.")
             return
 
         try:
 
             original_text, original_target_id, original_preset, original_index = (
-                item_data[1:5]
-            )
+                item_data[1:5])
             if not isinstance(original_index, int) or original_index < 0:
                 raise ValueError(f"Invalid index '{original_index}'")
             number_of_choices = len(selected_node.node_data.choices)
@@ -4426,9 +4366,8 @@ class DialogueEditor(QMainWindow):
             logging.exception(
                 f"Edit Choice Error - Invalid item data format: {item_data}. Error: {e}"
             )
-            QMessageBox.critical(
-                self, "Edit Error", "Could not read choice data for editing."
-            )
+            QMessageBox.critical(self, "Edit Error",
+                                 "Could not read choice data for editing.")
             return
 
         prompt_text = "New choice text:"
@@ -4437,9 +4376,10 @@ class DialogueEditor(QMainWindow):
         else:
             prompt_text += "\n(Cannot leave blank)"
 
-        new_text_raw, ok1 = QInputDialog.getText(
-            self, "Edit Choice Text / Set Next", prompt_text, text=original_text
-        )
+        new_text_raw, ok1 = QInputDialog.getText(self,
+                                                 "Edit Choice Text / Set Next",
+                                                 prompt_text,
+                                                 text=original_text)
         if not ok1:
             return
         new_text = new_text_raw.strip()
@@ -4456,16 +4396,17 @@ class DialogueEditor(QMainWindow):
                 return
             if new_target_id == selected_node.node_data.id:
                 QMessageBox.warning(
-                    self, "Invalid Target", "Node cannot link to itself using 'Next'."
-                )
+                    self, "Invalid Target",
+                    "Node cannot link to itself using 'Next'.")
                 return
 
-            cmd = SetNextNodeCommand(selected_node.node_data.id, new_target_id, self)
+            cmd = SetNextNodeCommand(selected_node.node_data.id, new_target_id,
+                                     self)
             self.undo_stack.push(cmd)
             logging.info(
                 f"Pushed SetNextNodeCommand (from edited single choice) for {selected_node.node_data.id} -> {new_target_id}"
             )
-            return  
+            return
 
         elif not new_text and number_of_choices > 1:
             QMessageBox.warning(
@@ -4473,15 +4414,14 @@ class DialogueEditor(QMainWindow):
                 "Edit Invalid",
                 "Choice text cannot be left blank when multiple choices exist.\nDelete other choices first if you want to convert this to a 'Next' link.",
             )
-            return  
+            return
 
         elif new_text:
             logging.debug(
                 f"Edit Choice: Non-blank text '{new_text}' entered. Editing choice at index {original_index}."
             )
             new_target_id = self._select_target_node_dialog(
-                "Select New Target Node", current_target=original_target_id
-            )
+                "Select New Target Node", current_target=original_target_id)
             if not new_target_id:
                 return
 
@@ -4489,7 +4429,7 @@ class DialogueEditor(QMainWindow):
             try:
                 current_preset_index = preset_names.index(original_preset)
             except ValueError:
-                current_preset_index = 0  
+                current_preset_index = 0
             new_preset, ok3 = QInputDialog.getItem(
                 self,
                 "Select New Preset",
@@ -4501,7 +4441,8 @@ class DialogueEditor(QMainWindow):
             if not ok3:
                 return
 
-            old_choice_tuple = (original_text, original_target_id, original_preset)
+            old_choice_tuple = (original_text, original_target_id,
+                                original_preset)
             new_choice_tuple = (new_text, new_target_id, new_preset)
 
             if old_choice_tuple != new_choice_tuple:
@@ -4518,7 +4459,7 @@ class DialogueEditor(QMainWindow):
                 )
             else:
                 logging.info("Edit Choice: No changes detected.")
-            return  
+            return
 
         logging.error("Edit Choice: Reached end of logic unexpectedly.")
 
@@ -4529,7 +4470,7 @@ class DialogueEditor(QMainWindow):
                 if self.scene:
                     self.scene.clearSelection()
                 gnode.setSelected(True)
-                QApplication.processEvents()  
+                QApplication.processEvents()
 
             if self.node_text_edit and self.get_selected_node() == gnode:
                 self.node_text_edit.setFocus()
@@ -4543,7 +4484,8 @@ class DialogueEditor(QMainWindow):
                     f"Could not focus text edit for node '{node_id}' - panel/selection mismatch?"
                 )
         else:
-            logging.warning(f"Node '{node_id}' requested for text focus not found.")
+            logging.warning(
+                f"Node '{node_id}' requested for text focus not found.")
 
     def handle_next_to_choice_request(self, item: QListWidgetItem):
         selected_node = self.get_selected_node()
@@ -4554,12 +4496,9 @@ class DialogueEditor(QMainWindow):
         self._check_pending_custom_prop_changes()
 
         item_data = item.data(Qt.ItemDataRole.UserRole)
-        if (
-            not item_data
-            or not isinstance(item_data, (list, tuple))
-            or len(item_data) < 2
-            or item_data[0] != config.CONN_TYPE_NEXT
-        ):
+        if (not item_data or not isinstance(item_data, (list, tuple))
+                or len(item_data) < 2
+                or item_data[0] != config.CONN_TYPE_NEXT):
             logging.warning(
                 "Attempted to convert non-NEXT item or item with invalid data."
             )
@@ -4570,8 +4509,7 @@ class DialogueEditor(QMainWindow):
             source_id = selected_node.node_data.id
         except IndexError:
             logging.exception(
-                f"Convert NEXT Error - Invalid item data format: {item_data}."
-            )
+                f"Convert NEXT Error - Invalid item data format: {item_data}.")
             QMessageBox.critical(
                 self,
                 "Conversion Error",
@@ -4581,33 +4519,32 @@ class DialogueEditor(QMainWindow):
 
         new_text = ""
         ok1 = False
-        while not new_text:  
+        while not new_text:
             new_text_raw, ok1 = QInputDialog.getText(
                 self,
                 "Convert to Choice",
                 f"Enter Text for new choice linking to '{target_id}':\n(Cannot be blank)",
             )
             if not ok1:
-                return  
+                return
             new_text = new_text_raw.strip()
             if not new_text:
-                QMessageBox.warning(
-                    self, "Text Required", "Choice text cannot be empty."
-                )
+                QMessageBox.warning(self, "Text Required",
+                                    "Choice text cannot be empty.")
 
         preset_names = list(config.PRESETS.keys())
-        new_preset, ok2 = QInputDialog.getItem(
-            self, "Select Preset", "UI Preset:", preset_names, 0, False
-        )
+        new_preset, ok2 = QInputDialog.getItem(self, "Select Preset",
+                                               "UI Preset:", preset_names, 0,
+                                               False)
         if not ok2:
             new_preset = "None"
 
-        cmd = ConvertNextToChoiceCommand(
-            source_id, target_id, new_text, new_preset, self
-        )
+        cmd = ConvertNextToChoiceCommand(source_id, target_id, new_text,
+                                         new_preset, self)
         self.undo_stack.push(cmd)
 
-    def get_edges_for_node(self, graphics_node: GraphicsNode) -> List[GraphicsEdge]:
+    def get_edges_for_node(self,
+                           graphics_node: GraphicsNode) -> List[GraphicsEdge]:
         if not graphics_node or not hasattr(graphics_node, "node_data"):
             return []
         node_id = graphics_node.node_data.id
@@ -4619,20 +4556,15 @@ class DialogueEditor(QMainWindow):
                 connected_edges.append(edge)
             elif dest_valid and edge.dest.node_data.id == node_id:
                 if edge not in connected_edges:
-                    connected_edges.append(
-                        edge
-                    )  
+                    connected_edges.append(edge)
         return connected_edges
 
     def draw_edges_for_node(self, graphics_node: GraphicsNode):
         if not graphics_node or not hasattr(graphics_node, "node_data"):
             logging.warning("draw_edges_for_node called with invalid node.")
             return
-        if (
-            not hasattr(self, "graphics_nodes")
-            or not self.scene
-            or not hasattr(self, "graphics_edges")
-        ):
+        if (not hasattr(self, "graphics_nodes") or not self.scene
+                or not hasattr(self, "graphics_edges")):
             logging.error("Editor components missing for drawing edges.")
             return
 
@@ -4642,7 +4574,7 @@ class DialogueEditor(QMainWindow):
             f"Redrawing edges for node '{node_id}' (Start node is '{current_start_node_id}')..."
         )
 
-        edges_to_remove = list(graphics_node.edges)  
+        edges_to_remove = list(graphics_node.edges)
         logging.debug(
             f" Found {len(edges_to_remove)} existing outgoing edges for '{node_id}'."
         )
@@ -4665,7 +4597,8 @@ class DialogueEditor(QMainWindow):
                     self.scene.addItem(edge)
                     self.graphics_edges.append(edge)
                     edges_created_count += 1
-                    logging.debug(f"  Created 'Next' edge: {node_id} -> {target_id}")
+                    logging.debug(
+                        f"  Created 'Next' edge: {node_id} -> {target_id}")
                 else:
                     logging.warning(
                         f"Target node '{target_id}' for next link from '{node_id}' not found. Edge not drawn."
@@ -4680,9 +4613,10 @@ class DialogueEditor(QMainWindow):
                     continue
                 dest_node = self.graphics_nodes.get(target_id)
                 if dest_node:
-                    edge = GraphicsEdge(
-                        graphics_node, dest_node, self, choice_text=choice_text
-                    )
+                    edge = GraphicsEdge(graphics_node,
+                                        dest_node,
+                                        self,
+                                        choice_text=choice_text)
                     self.scene.addItem(edge)
                     self.graphics_edges.append(edge)
                     edges_created_count += 1
@@ -4694,7 +4628,7 @@ class DialogueEditor(QMainWindow):
                         f"Target node '{target_id}' for choice '{choice_text}' from '{node_id}' not found. Edge not drawn."
                     )
 
-        graphics_node.update()  
+        graphics_node.update()
         logging.debug(
             f"Finished redrawing edges for '{node_id}'. Created {edges_created_count} non-looping edges."
         )
@@ -4711,7 +4645,8 @@ class DialogueEditor(QMainWindow):
             try:
                 self.graphics_edges.remove(edge)
             except ValueError:
-                logging.warning(f"Edge {edge_desc} already removed from master list.")
+                logging.warning(
+                    f"Edge {edge_desc} already removed from master list.")
                 pass
         if edge.scene() == self.scene:
             try:
@@ -4719,15 +4654,16 @@ class DialogueEditor(QMainWindow):
                 logging.debug(f"Removed edge {edge_desc} from scene.")
             except Exception as e:
                 logging.exception(
-                    f"Error removing edge {edge_desc} item from scene: {e}"
-                )
+                    f"Error removing edge {edge_desc} item from scene: {e}")
         elif edge.scene():
-            logging.warning(f"Edge {edge_desc} found but belongs to a different scene.")
+            logging.warning(
+                f"Edge {edge_desc} found but belongs to a different scene.")
 
     def redraw_all_edges(self):
         logging.info("Redrawing all edges...")
         edges_to_clear = list(self.graphics_edges)
-        logging.debug(f" Clearing {len(edges_to_clear)} existing graphical edges.")
+        logging.debug(
+            f" Clearing {len(edges_to_clear)} existing graphical edges.")
         for edge in edges_to_clear:
             self.remove_edge_object(edge)
 
@@ -4741,13 +4677,14 @@ class DialogueEditor(QMainWindow):
         for node_id, graphics_node in self.graphics_nodes.items():
             self.draw_edges_for_node(graphics_node)
             nodes_processed += 1
-        logging.info(f"Finished redrawing all edges for {nodes_processed} nodes.")
+        logging.info(
+            f"Finished redrawing all edges for {nodes_processed} nodes.")
 
-    def handle_edge_drag_started(self, source_node: GraphicsNode, start_pos: QPointF):
+    def handle_edge_drag_started(self, source_node: GraphicsNode,
+                                 start_pos: QPointF):
         if self.is_drawing_edge:
             logging.warning(
-                "Attempted to start edge drag while another is in progress."
-            )
+                "Attempted to start edge drag while another is in progress.")
             return
         if source_node.node_data.next_node:
             QMessageBox.warning(
@@ -4757,22 +4694,20 @@ class DialogueEditor(QMainWindow):
             )
             return
 
-        logging.debug(f"Starting edge drag from node '{source_node.node_data.id}'.")
+        logging.debug(
+            f"Starting edge drag from node '{source_node.node_data.id}'.")
         self.is_drawing_edge = True
         self.edge_drag_source_node = source_node
         self.edge_drag_line = QGraphicsLineItem()
-        pen = QPen(
-            config.EDGE_DRAG_COLOR, config.EDGE_PEN_WIDTH + 0.5, Qt.PenStyle.DashLine
-        )
+        pen = QPen(config.EDGE_DRAG_COLOR, config.EDGE_PEN_WIDTH + 0.5,
+                   Qt.PenStyle.DashLine)
         self.edge_drag_line.setPen(pen)
-        self.edge_drag_line.setZValue(2)  
+        self.edge_drag_line.setZValue(2)
         self.edge_drag_line.setLine(QLineF(start_pos, start_pos))
         if self.scene:
             self.scene.addItem(self.edge_drag_line)
         if self.view:
-            self.view.setDragMode(
-                QGraphicsView.DragMode.NoDrag
-            )  
+            self.view.setDragMode(QGraphicsView.DragMode.NoDrag)
             self.view.setCursor(Qt.CursorShape.CrossCursor)
 
     def handle_edge_drag_moved(self, current_pos: QPointF):
@@ -4784,22 +4719,24 @@ class DialogueEditor(QMainWindow):
 
     def handle_edge_drag_ended(self, scene_pos: QPointF):
         source_node = self.edge_drag_source_node
-        self._cleanup_edge_drag()  
+        self._cleanup_edge_drag()
         if not source_node:
             logging.warning("Edge drag ended, but source node was lost.")
             return
 
         logging.debug(f"Edge drag ended at scene pos: {scene_pos}")
-        item_at_release = (
-            self.view.itemAt(self.view.mapFromScene(scene_pos)) if self.view else None
-        )
+        item_at_release = (self.view.itemAt(self.view.mapFromScene(scene_pos))
+                           if self.view else None)
         target_node: Optional[GraphicsNode] = None
 
-        if isinstance(item_at_release, GraphicsNode) and item_at_release != source_node:
+        if isinstance(item_at_release,
+                      GraphicsNode) and item_at_release != source_node:
             target_node = item_at_release
-            logging.info(f"Edge drag ended on target node: {target_node.node_data.id}")
+            logging.info(
+                f"Edge drag ended on target node: {target_node.node_data.id}")
         elif item_at_release:
-            logging.debug(f"Edge drag ended on non-node item: {type(item_at_release)}")
+            logging.debug(
+                f"Edge drag ended on non-node item: {type(item_at_release)}")
         else:
             logging.debug("Edge drag ended on empty space.")
 
@@ -4811,7 +4748,7 @@ class DialogueEditor(QMainWindow):
                 logging.warning(
                     f"Drag link cancelled post-drag: source '{source_id}' has 'Next' connection."
                 )
-                return  
+                return
 
             choice_text_raw, ok = QInputDialog.getText(
                 self,
@@ -4819,24 +4756,23 @@ class DialogueEditor(QMainWindow):
                 f"Text for choice '{source_id}' -> '{target_id}':",
             )
             if not ok:
-                logging.info("User cancelled adding choice text after edge drag.")
+                logging.info(
+                    "User cancelled adding choice text after edge drag.")
                 return
             choice_text = choice_text_raw.strip()
 
             preset_names = list(config.PRESETS.keys())
-            preset_name, ok_p = QInputDialog.getItem(
-                self, "Select Preset", "UI Preset:", preset_names, 0, False
-            )
+            preset_name, ok_p = QInputDialog.getItem(self, "Select Preset",
+                                                     "UI Preset:",
+                                                     preset_names, 0, False)
             if not ok_p:
                 preset_name = "None"
 
-            final_choice_text = (
-                choice_text if choice_text else config.DEFAULT_CHOICE_TEXT
-            )
+            final_choice_text = (choice_text if choice_text else
+                                 config.DEFAULT_CHOICE_TEXT)
 
-            cmd = AddChoiceCommand(
-                source_id, final_choice_text, target_id, preset_name, self
-            )
+            cmd = AddChoiceCommand(source_id, final_choice_text, target_id,
+                                   preset_name, self)
             self.undo_stack.push(cmd)
 
     def handle_edge_drag_cancelled(self):
@@ -4850,9 +4786,7 @@ class DialogueEditor(QMainWindow):
         self.edge_drag_source_node = None
         self.is_drawing_edge = False
         if self.view:
-            self.view.setDragMode(
-                QGraphicsView.DragMode.ScrollHandDrag
-            )  
+            self.view.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
             self.view.unsetCursor()
         logging.debug("Cleaned up edge drag state.")
 
@@ -4861,13 +4795,12 @@ class DialogueEditor(QMainWindow):
         if scene is None:
             return None
         try:
-            scene.sceneRect()  
+            scene.sceneRect()
         except RuntimeError:
             return None
         except Exception as e:
             logging.exception(
-                f"Unexpected error accessing scene in get_selected_node: {e}"
-            )
+                f"Unexpected error accessing scene in get_selected_node: {e}")
             return None
 
         try:
@@ -4875,7 +4808,7 @@ class DialogueEditor(QMainWindow):
             if len(items) == 1 and isinstance(items[0], GraphicsNode):
                 return items[0]
         except RuntimeError:
-            return None  
+            return None
         except Exception as e:
             logging.exception(f"Unexpected error calling selectedItems: {e}")
             return None
@@ -4886,8 +4819,7 @@ class DialogueEditor(QMainWindow):
             return []
         try:
             return [
-                item
-                for item in self.scene.selectedItems()
+                item for item in self.scene.selectedItems()
                 if isinstance(item, GraphicsNode)
             ]
         except RuntimeError:
@@ -4898,8 +4830,7 @@ class DialogueEditor(QMainWindow):
             return []
         try:
             return [
-                item
-                for item in self.scene.selectedItems()
+                item for item in self.scene.selectedItems()
                 if isinstance(item, GraphicsEdge)
             ]
         except RuntimeError:
@@ -4918,7 +4849,8 @@ class DialogueEditor(QMainWindow):
     def show_about_dialog(self):
         version = getattr(config, "APP_VERSION", "Unknown")
         about_text = f"""<b>{config.APP_NAME}</b><br><br>Version: {version}<br>A visual tool for creating and editing node-based dialogues created by @wpenistone.<br><br>Uses PyQt6."""
-        QMessageBox.about(self, f"About {config.APP_NAME} v{version}", about_text)
+        QMessageBox.about(self, f"About {config.APP_NAME} v{version}",
+                          about_text)
 
     def _run_auto_layout(self):
         logging.info("Run Auto Layout requested.")
@@ -4950,7 +4882,7 @@ class DialogueEditor(QMainWindow):
         print(
             f"Applying Sugiyama Layout (Ignoring edges to '{start_node_id_to_ignore}', BK + Nudge)..."
         )
-        self._push_text_edit_command()  
+        self._push_text_edit_command()
 
         initial_canvas_offset_x, initial_canvas_offset_y = 50.0, 50.0
 
@@ -4960,11 +4892,8 @@ class DialogueEditor(QMainWindow):
         all_real_nodes = set(self.nodes_data.keys())
         for node_id, node_data in self.nodes_data.items():
             successors = []
-            if (
-                hasattr(node_data, "next_node")
-                and node_data.next_node
-                and node_data.next_node in self.nodes_data
-            ):
+            if (hasattr(node_data, "next_node") and node_data.next_node
+                    and node_data.next_node in self.nodes_data):
                 if node_data.next_node != start_node_id_to_ignore:
                     successors.append(node_data.next_node)
             elif hasattr(node_data, "choices") and node_data.choices:
@@ -4972,7 +4901,7 @@ class DialogueEditor(QMainWindow):
                     if tid in self.nodes_data and tid != start_node_id_to_ignore:
                         successors.append(tid)
 
-            unique_successors = sorted(list(set(successors)))  
+            unique_successors = sorted(list(set(successors)))
             if unique_successors:
                 real_adj_filtered[node_id].extend(unique_successors)
                 for succ_id in unique_successors:
@@ -4984,10 +4913,10 @@ class DialogueEditor(QMainWindow):
         nodes_at_level = defaultdict(list)
         max_level = 0
 
-        source_nodes = sorted(
-            [nid for nid in all_real_nodes if not real_rev_adj_filtered.get(nid)]
-        )
-        if not source_nodes:  
+        source_nodes = sorted([
+            nid for nid in all_real_nodes if not real_rev_adj_filtered.get(nid)
+        ])
+        if not source_nodes:
             if self.start_node_id and self.start_node_id in all_real_nodes:
                 source_nodes = [self.start_node_id]
             elif all_real_nodes:
@@ -5014,23 +4943,18 @@ class DialogueEditor(QMainWindow):
 
                 if new_v_level >= current_v_level:
 
-                    if (
-                        current_v_level != -1
-                        and new_v_level > current_v_level
-                        and v in nodes_at_level.get(current_v_level, [])
-                    ):
+                    if (current_v_level != -1 and new_v_level > current_v_level
+                            and v in nodes_at_level.get(current_v_level, [])):
                         try:
                             nodes_at_level[current_v_level].remove(v)
                         except ValueError:
-                            pass  
+                            pass
 
                     node_levels[v] = new_v_level
                     if v not in nodes_at_level[new_v_level]:
                         nodes_at_level[new_v_level].append(v)
                     visited_bfs_levels[v] = new_v_level
-                    queue.append(
-                        (v, new_v_level)
-                    )  
+                    queue.append((v, new_v_level))
 
         processed_in_layering = set(node_levels.keys())
         for node_id in all_real_nodes:
@@ -5045,15 +4969,15 @@ class DialogueEditor(QMainWindow):
             nodes_at_level[level].sort()
 
         print("Phase 2: Adding Dummy Nodes...")
-        adj = defaultdict(list)  
-        rev_adj = defaultdict(list)  
-        dummy_nodes = {}  
+        adj = defaultdict(list)
+        rev_adj = defaultdict(list)
+        dummy_nodes = {}
         all_node_ids_inc_dummies = set(self.nodes_data.keys())
 
         for u, successors in real_adj_filtered.items():
             u_level = node_levels.get(u, -1)
             if u_level == -1:
-                continue  
+                continue
             for v in successors:
                 v_level = node_levels.get(v, -1)
                 if v_level != -1 and v_level == u_level + 1:
@@ -5099,12 +5023,13 @@ class DialogueEditor(QMainWindow):
 
         for level in nodes_at_level:
             nodes_at_level[level].sort()
-        current_max_level = max(nodes_at_level.keys()) if nodes_at_level else -1
+        current_max_level = max(
+            nodes_at_level.keys()) if nodes_at_level else -1
 
         print(
             f"Phase 3: Crossing Reduction ({ORDERING_ITERATIONS} iterations, Alt Bary/Median + Swap)..."
         )
-        node_order_indices = {}  
+        node_order_indices = {}
 
         def update_node_order_indices():
             node_order_indices.clear()
@@ -5118,38 +5043,33 @@ class DialogueEditor(QMainWindow):
         total_swaps = 0
         for iteration in range(ORDERING_ITERATIONS):
             swaps_in_iter = 0
-            use_median = iteration % 4 >= 2  
+            use_median = iteration % 4 >= 2
 
             pass_metrics = {}
             for level_idx in range(1, current_max_level + 1):
                 for node_id in nodes_at_level.get(level_idx, []):
                     preds = [
-                        p
-                        for p in rev_adj.get(node_id, [])
+                        p for p in rev_adj.get(node_id, [])
                         if node_order_indices.get(p) is not None
                         and p in nodes_at_level.get(level_idx - 1, [])
                     ]
-                    metric = node_order_indices.get(
-                        node_id, 0.0
-                    )  
+                    metric = node_order_indices.get(node_id, 0.0)
                     if preds:
                         pred_indices = sorted(
-                            [node_order_indices[pid] for pid in preds]
-                        )
+                            [node_order_indices[pid] for pid in preds])
                         if pred_indices:
                             if use_median:
-                                metric = pred_indices[(len(pred_indices) - 1) // 2]
+                                metric = pred_indices[(len(pred_indices) - 1)
+                                                      // 2]
                             else:
                                 metric = sum(pred_indices) / len(pred_indices)
                     pass_metrics[node_id] = metric
 
             for level_idx in range(1, current_max_level + 1):
-                nodes_at_level[level_idx].sort(
-                    key=lambda nid: (
-                        pass_metrics.get(nid, node_order_indices.get(nid, 0.0)),
-                        nid,
-                    )
-                )  
+                nodes_at_level[level_idx].sort(key=lambda nid: (
+                    pass_metrics.get(nid, node_order_indices.get(nid, 0.0)),
+                    nid,
+                ))
             update_node_order_indices()
 
             down_swaps = 0
@@ -5184,38 +5104,33 @@ class DialogueEditor(QMainWindow):
                             improved = True
                             swaps_in_iter += 1
                             down_swaps += 1
-                            update_node_order_indices()  
+                            update_node_order_indices()
 
             pass_metrics.clear()
-            for level_idx in range(
-                current_max_level - 1, -1, -1
-            ):  
+            for level_idx in range(current_max_level - 1, -1, -1):
                 for node_id in nodes_at_level.get(level_idx, []):
                     succs = [
-                        s
-                        for s in adj.get(node_id, [])
+                        s for s in adj.get(node_id, [])
                         if node_order_indices.get(s) is not None
                         and s in nodes_at_level.get(level_idx + 1, [])
                     ]
-                    metric = node_order_indices.get(node_id, 0.0)  
+                    metric = node_order_indices.get(node_id, 0.0)
                     if succs:
                         succ_indices = sorted(
-                            [node_order_indices[sid] for sid in succs]
-                        )
+                            [node_order_indices[sid] for sid in succs])
                         if succ_indices:
                             if use_median:
-                                metric = succ_indices[(len(succ_indices) - 1) // 2]
+                                metric = succ_indices[(len(succ_indices) - 1)
+                                                      // 2]
                             else:
                                 metric = sum(succ_indices) / len(succ_indices)
                     pass_metrics[node_id] = metric
 
             for level_idx in range(current_max_level - 1, -1, -1):
-                nodes_at_level[level_idx].sort(
-                    key=lambda nid: (
-                        pass_metrics.get(nid, node_order_indices.get(nid, 0.0)),
-                        nid,
-                    )
-                )
+                nodes_at_level[level_idx].sort(key=lambda nid: (
+                    pass_metrics.get(nid, node_order_indices.get(nid, 0.0)),
+                    nid,
+                ))
             update_node_order_indices()
 
             up_swaps = 0
@@ -5227,11 +5142,11 @@ class DialogueEditor(QMainWindow):
                     for i in range(len(current_order) - 1):
                         u, v = current_order[i], current_order[i + 1]
                         crossings_uv = count_crossings_between_nodes(
-                            u, v, nodes_at_level, node_order_indices, adj, level_idx + 1
-                        )
+                            u, v, nodes_at_level, node_order_indices, adj,
+                            level_idx + 1)
                         crossings_vu = count_crossings_between_nodes(
-                            v, u, nodes_at_level, node_order_indices, adj, level_idx + 1
-                        )
+                            v, u, nodes_at_level, node_order_indices, adj,
+                            level_idx + 1)
                         if crossings_vu < crossings_uv:
                             (
                                 nodes_at_level[level_idx][i],
@@ -5243,19 +5158,19 @@ class DialogueEditor(QMainWindow):
                             update_node_order_indices()
 
             total_swaps += swaps_in_iter
-            if (
-                swaps_in_iter == 0 and iteration > 4
-            ):  
+            if swaps_in_iter == 0 and iteration > 4:
                 print(f"  Converged after iteration {iteration + 1}.")
                 break
 
-        print(f"Phase 3: Crossing Reduction Complete. Total swaps: {total_swaps}")
+        print(
+            f"Phase 3: Crossing Reduction Complete. Total swaps: {total_swaps}"
+        )
 
         print("Phase 4: Coordinate Assignment (BK Down-Align + Nudge)...")
         root = {nid: nid for nid in all_node_ids_inc_dummies}
         align = {nid: nid for nid in all_node_ids_inc_dummies}
-        x_coords = {nid: 0.0 for nid in all_node_ids_inc_dummies}  
-        final_positions = {}  
+        x_coords = {nid: 0.0 for nid in all_node_ids_inc_dummies}
+        final_positions = {}
 
         def get_node_width(nid):
             return NODE_WIDTH if nid in self.nodes_data else DUMMY_NODE_WIDTH
@@ -5265,20 +5180,20 @@ class DialogueEditor(QMainWindow):
             w2 = get_node_width(n2_id)
             return (w1 / 2.0) + (w2 / 2.0) + NODE_H_GAP
 
-        for l in range(1, current_max_level + 1):  
+        for l in range(1, current_max_level + 1):
             for v in nodes_at_level.get(l, []):
                 preds = [
-                    p for p in rev_adj.get(v, []) if p in nodes_at_level.get(l - 1, [])
+                    p for p in rev_adj.get(v, [])
+                    if p in nodes_at_level.get(l - 1, [])
                 ]
                 if preds:
-                    preds.sort(key=lambda p: node_order_indices.get(p, float("inf")))
+                    preds.sort(
+                        key=lambda p: node_order_indices.get(p, float("inf")))
                     median_pred_idx = (len(preds) - 1) // 2
                     median_pred_id = preds[median_pred_idx]
 
-                    if (
-                        align.get(median_pred_id, median_pred_id) != median_pred_id
-                        or v in dummy_nodes
-                    ):
+                    if (align.get(median_pred_id, median_pred_id)
+                            != median_pred_id or v in dummy_nodes):
                         align[v] = median_pred_id
 
                         curr_root = root.get(median_pred_id, median_pred_id)
@@ -5286,11 +5201,11 @@ class DialogueEditor(QMainWindow):
                             curr_root = root.get(curr_root, curr_root)
                         root[v] = curr_root
 
-        placed_x = {}  
+        placed_x = {}
         for l in range(current_max_level + 1):
             last_placed_node_id = None
             for v in nodes_at_level.get(l, []):
-                if v not in placed_x:  
+                if v not in placed_x:
 
                     curr_root = root.get(v, v)
                     while root.get(curr_root, curr_root) != curr_root:
@@ -5298,25 +5213,23 @@ class DialogueEditor(QMainWindow):
 
                     min_pos = 0.0
                     if last_placed_node_id is not None:
-                        separation = get_node_separation(last_placed_node_id, curr_root)
-                        min_pos = placed_x.get(last_placed_node_id, 0.0) + separation
+                        separation = get_node_separation(
+                            last_placed_node_id, curr_root)
+                        min_pos = placed_x.get(last_placed_node_id,
+                                               0.0) + separation
 
                     block_nodes = [
-                        n
-                        for n in nodes_at_level.get(l, [])
+                        n for n in nodes_at_level.get(l, [])
                         if root.get(n, n) == curr_root
                     ]
                     current_pos = min_pos
                     for node_in_block in block_nodes:
                         placed_x[node_in_block] = current_pos
-                        last_placed_node_id = (
-                            node_in_block  
-                        )
+                        last_placed_node_id = node_in_block
                         current_pos += get_node_separation(
-                            node_in_block, node_in_block
-                        )  
+                            node_in_block, node_in_block)
 
-        x_coords = placed_x.copy()  
+        x_coords = placed_x.copy()
 
         print(
             f"  BK Pass 4.5: Nudging nodes towards successors ({NUDGE_ITERATIONS} iters, factor={NUDGE_FACTOR})..."
@@ -5328,15 +5241,14 @@ class DialogueEditor(QMainWindow):
                 num_nodes_in_layer = len(current_layer_nodes)
                 for i, u in enumerate(current_layer_nodes):
                     successors = [
-                        s
-                        for s in adj.get(u, [])
+                        s for s in adj.get(u, [])
                         if node_levels.get(s) == l + 1 and s in x_coords
                     ]
                     if successors:
                         try:
-                            avg_succ_x = sum(x_coords[s] for s in successors) / len(
-                                successors
-                            )
+                            avg_succ_x = sum(
+                                x_coords[s]
+                                for s in successors) / len(successors)
                         except ZeroDivisionError:
                             continue
 
@@ -5348,29 +5260,30 @@ class DialogueEditor(QMainWindow):
                         max_allowed_x_right = float("inf")
                         if i > 0:
                             left_neighbor = current_layer_nodes[i - 1]
-                            left_neighbor_x = x_coords.get(left_neighbor, -float("inf"))
+                            left_neighbor_x = x_coords.get(
+                                left_neighbor, -float("inf"))
                             if left_neighbor_x > -float("inf"):
-                                separation = get_node_separation(left_neighbor, u)
+                                separation = get_node_separation(
+                                    left_neighbor, u)
                                 min_allowed_x_left = left_neighbor_x + separation
                         if i < num_nodes_in_layer - 1:
                             right_neighbor = current_layer_nodes[i + 1]
                             right_neighbor_x = x_coords.get(
-                                right_neighbor, float("inf")
-                            )
+                                right_neighbor, float("inf"))
                             if right_neighbor_x < float("inf"):
-                                separation = get_node_separation(u, right_neighbor)
+                                separation = get_node_separation(
+                                    u, right_neighbor)
                                 max_allowed_x_right = right_neighbor_x - separation
 
                         target_x = current_x + nudge
-                        final_x = max(
-                            min_allowed_x_left, min(target_x, max_allowed_x_right)
-                        )
+                        final_x = max(min_allowed_x_left,
+                                      min(target_x, max_allowed_x_right))
                         actual_nudge = final_x - current_x
                         if abs(actual_nudge) > 1e-3:
                             x_coords[u] = final_x
                             total_nudge_this_iter += abs(actual_nudge)
 
-            if total_nudge_this_iter < 1.0 and nudge_iter > 0:  
+            if total_nudge_this_iter < 1.0 and nudge_iter > 0:
                 print(f"    Nudging converged after iter {nudge_iter + 1}.")
                 break
 
@@ -5395,27 +5308,29 @@ class DialogueEditor(QMainWindow):
                 f"  Layout bounds: [{min_x_coord:.1f}, {max_x_coord:.1f}]. Offset: {x_offset:.1f}"
             )
         elif nodes_have_coords:
-            x_offset = initial_canvas_offset_x - min_x_coord  
+            x_offset = initial_canvas_offset_x - min_x_coord
             print(f"  Single column layout. Offset: {x_offset:.1f}")
         else:
             print("  Warning: No nodes have coords.")
 
         for l in range(current_max_level + 1):
             level_y_center = initial_canvas_offset_y + l * LAYER_V_GAP
-            level_y_top = level_y_center - NODE_HEIGHT / 2.0  
+            level_y_top = level_y_center - NODE_HEIGHT / 2.0
             for v in nodes_at_level.get(l, []):
                 if v in x_coords:
                     node_center_x = x_coords[v] + x_offset
                     if v in self.nodes_data:
                         node_width = get_node_width(v)
                         node_top_left_x = node_center_x - node_width / 2.0
-                        final_positions[v] = QPointF(node_top_left_x, level_y_top)
+                        final_positions[v] = QPointF(node_top_left_x,
+                                                     level_y_top)
                     elif v in dummy_nodes:
                         dummy_nodes[v]["pos"] = QPointF(
-                            node_center_x, level_y_center
-                        )  
+                            node_center_x, level_y_center)
                 else:
-                    print(f"  Warning: Node '{v}' in layer {l} has no final x-coord.")
+                    print(
+                        f"  Warning: Node '{v}' in layer {l} has no final x-coord."
+                    )
 
         print("Phase 5: Checking for unplaced nodes...")
         placed_real_nodes = set(final_positions.keys())
@@ -5429,7 +5344,8 @@ class DialogueEditor(QMainWindow):
                 (p.y() + NODE_HEIGHT for p in final_positions.values()),
                 default=initial_canvas_offset_y,
             )
-            unplaced_start_y = max(initial_canvas_offset_y, max_y_placed + LAYER_V_GAP)
+            unplaced_start_y = max(initial_canvas_offset_y,
+                                   max_y_placed + LAYER_V_GAP)
             current_unplaced_x = initial_canvas_offset_x
             for i, node_id in enumerate(unplaced_nodes):
                 pos = QPointF(
@@ -5453,18 +5369,17 @@ class DialogueEditor(QMainWindow):
                 if current_pos is None:
                     needs_move = True
                     break
-                if (
-                    abs(current_pos.x() - target_pos.x()) > 0.1
-                    or abs(current_pos.y() - target_pos.y()) > 0.1
-                ):
+                if (abs(current_pos.x() - target_pos.x()) > 0.1
+                        or abs(current_pos.y() - target_pos.y()) > 0.1):
                     needs_move = True
                     break
 
             if needs_move:
                 print(f"Pushing '{layout_command_text}' command...")
-                cmd = ApplyLayoutCommand(
-                    old_positions, final_positions, self, text=layout_command_text
-                )
+                cmd = ApplyLayoutCommand(old_positions,
+                                         final_positions,
+                                         self,
+                                         text=layout_command_text)
                 if hasattr(self, "scene"):
                     self.scene.clearSelection()
                 if hasattr(QApplication, "processEvents"):
@@ -5499,7 +5414,8 @@ class DialogueEditor(QMainWindow):
                 pad_y = getattr(config, "VIEW_FIT_PADDING_Y", 100.0)
                 padded_bounds = bounds.adjusted(-pad_x, -pad_y, pad_x, pad_y)
                 self.view.setSceneRect(padded_bounds)
-                self.view.fitInView(padded_bounds, Qt.AspectRatioMode.KeepAspectRatio)
+                self.view.fitInView(padded_bounds,
+                                    Qt.AspectRatioMode.KeepAspectRatio)
 
                 content_center = bounds.center()
                 self.view.centerOn(content_center)
@@ -5510,10 +5426,11 @@ class DialogueEditor(QMainWindow):
                 logging.info("Scene bounds invalid or empty, resetting view.")
                 default_rect = QRectF(0, 0, 600, 400)
                 self.view.setSceneRect(default_rect)
-                self.view.fitInView(default_rect, Qt.AspectRatioMode.KeepAspectRatio)
+                self.view.fitInView(default_rect,
+                                    Qt.AspectRatioMode.KeepAspectRatio)
         except Exception as e:
             logging.exception(f"Error fitting view: {e}")
-            self.view.setSceneRect(QRectF(0, 0, 500, 500))  
+            self.view.setSceneRect(QRectF(0, 0, 500, 500))
 
     def new_file(self) -> bool:
         self._push_text_edit_command()
@@ -5524,7 +5441,8 @@ class DialogueEditor(QMainWindow):
                 self,
                 "Unsaved Changes",
                 "Discard current unsaved changes?",
-                QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Discard
+                | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Cancel,
             )
             if reply == QMessageBox.StandardButton.Cancel:
@@ -5538,21 +5456,19 @@ class DialogueEditor(QMainWindow):
             for item in items_to_remove:
                 if isinstance(item, GraphicsEdge):
                     self.remove_edge_object(item)
-                elif item in self.scene.items():  
+                elif item in self.scene.items():
                     try:
                         self.scene.removeItem(item)
                     except Exception as e:
                         logging.exception(
-                            f"Error removing item {item} during clear: {e}"
-                        )
-            self.scene.clear()  
+                            f"Error removing item {item} during clear: {e}")
+            self.scene.clear()
 
         self.nodes_data.clear()
         self.graphics_nodes.clear()
         self.graphics_edges.clear()
-        self.visual_groups.clear()  
-        self.bookmarks.clear()  
-        self.clipboard.clear()  
+        self.bookmarks.clear()
+        self.clipboard.clear()
         self.start_node_id = None
         self.next_node_id_counter = 1
         self.current_project_path = None
@@ -5560,18 +5476,18 @@ class DialogueEditor(QMainWindow):
         self._mark_unsaved(False)
         self.update_properties_panel()
         self._update_window_title()
-        self.update_bookmark_menu()  
-        self.clear_all_highlights()  
+        self.update_bookmark_menu()
+        self.clear_all_highlights()
         logging.info("New project created successfully.")
         return True
 
     def load_project(self):
         if not self.new_file():
-            return  
+            return
 
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Dialogue Project", "", config.PROJECT_FILE_FILTER
-        )
+        file_path, _ = QFileDialog.getOpenFileName(self,
+                                                   "Open Dialogue Project", "",
+                                                   config.PROJECT_FILE_FILTER)
         if not file_path:
             return
 
@@ -5581,7 +5497,8 @@ class DialogueEditor(QMainWindow):
                 project_data = json.load(f)
 
             nodes_key = config.get_project_key("nodes")
-            if not isinstance(project_data, dict) or nodes_key not in project_data:
+            if not isinstance(project_data,
+                              dict) or nodes_key not in project_data:
                 raise ValueError(
                     f"Invalid format: Missing top-level '{nodes_key}' dictionary."
                 )
@@ -5603,7 +5520,8 @@ class DialogueEditor(QMainWindow):
                         raise ValueError(f"Duplicate node ID '{node_data.id}'")
                     graphics_node = self._add_node_internal(node_data)
                     if not graphics_node:
-                        raise ValueError(f"Failed internal add for '{node_data.id}'")
+                        raise ValueError(
+                            f"Failed internal add for '{node_data.id}'")
                     nodes_added_count += 1
                     if node_data.is_start_node:
                         if potential_start_id is None:
@@ -5612,24 +5530,21 @@ class DialogueEditor(QMainWindow):
                             logging.warning(
                                 f"Multiple start nodes flagged ('{potential_start_id}', '{node_data.id}'). Using first found: '{potential_start_id}'."
                             )
-                            node_data.is_start_node = (
-                                False  
-                            )
+                            node_data.is_start_node = False
                 except Exception as node_e:
-                    logging.exception(f"Error loading node '{node_key}': {node_e}")
+                    logging.exception(
+                        f"Error loading node '{node_key}': {node_e}")
                     load_errors.append(f"Node '{node_key}': {node_e}")
 
             if load_errors:
                 QMessageBox.warning(
                     self,
                     "Load Warning",
-                    f"Errors occurred while loading some nodes:\n- "
-                    + "\n- ".join(load_errors),
+                    f"Errors occurred while loading some nodes:\n- " +
+                    "\n- ".join(load_errors),
                 )
             if nodes_added_count == 0 and not load_errors:
-                raise ValueError(
-                    "No valid nodes were loaded from the file."
-                )  
+                raise ValueError("No valid nodes were loaded from the file.")
 
             bookmarks_key = config.get_project_key("bookmarks")
             loaded_bookmarks = project_data.get(bookmarks_key, [])
@@ -5641,7 +5556,7 @@ class DialogueEditor(QMainWindow):
                 }
                 logging.info(f"Loaded {len(self.bookmarks)} valid bookmarks.")
                 self.update_bookmark_menu()
-                self.update_all_dynamic_node_visuals()  
+                self.update_all_dynamic_node_visuals()
             else:
                 logging.warning(
                     f"Invalid bookmark format found in project file (expected list)."
@@ -5654,17 +5569,13 @@ class DialogueEditor(QMainWindow):
             elif not start_set and config.START_NODE_EXPORT_ID in self.graphics_nodes:
                 if self._set_editor_start_node(config.START_NODE_EXPORT_ID):
                     start_set = True
-            elif (
-                not start_set and self.nodes_data
-            ):  
+            elif not start_set and self.nodes_data:
                 fallback_id = sorted(self.nodes_data.keys())[0]
                 if fallback_id in self.graphics_nodes:
                     if self._set_editor_start_node(fallback_id):
                         start_set = True
 
-            if (
-                not start_set and nodes_added_count > 0
-            ):  
+            if not start_set and nodes_added_count > 0:
                 QMessageBox.critical(
                     self,
                     "Load Error",
@@ -5681,12 +5592,14 @@ class DialogueEditor(QMainWindow):
             self.update_properties_panel()
             self._update_window_title()
             self._fit_view_after_layout()
-            logging.info(f"Project loaded successfully: {len(self.nodes_data)} nodes.")
+            logging.info(
+                f"Project loaded successfully: {len(self.nodes_data)} nodes.")
 
         except Exception as e:
             logging.exception("Failed to load project from {file_path}: {e}")
-            QMessageBox.critical(self, "Load Failed", f"Could not load project:\n{e}")
-            self.new_file()  
+            QMessageBox.critical(self, "Load Failed",
+                                 f"Could not load project:\n{e}")
+            self.new_file()
 
     def save_project_as(self) -> bool:
         self._push_text_edit_command()
@@ -5694,11 +5607,8 @@ class DialogueEditor(QMainWindow):
         self._check_pending_custom_prop_changes()
         default_name_base = self.start_node_id if self.start_node_id else "Untitled"
         default_name = f"{default_name_base}{config.PROJECT_FILE_EXTENSION}"
-        start_dir = (
-            os.path.dirname(self.current_project_path)
-            if self.current_project_path
-            else ""
-        )
+        start_dir = (os.path.dirname(self.current_project_path)
+                     if self.current_project_path else "")
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Dialogue Project As",
@@ -5710,11 +5620,12 @@ class DialogueEditor(QMainWindow):
             logging.info("Save As cancelled by user.")
             return False
 
-        if not file_path.lower().endswith(config.PROJECT_FILE_EXTENSION.lower()):
+        if not file_path.lower().endswith(
+                config.PROJECT_FILE_EXTENSION.lower()):
             file_path += config.PROJECT_FILE_EXTENSION
 
         self.current_project_path = file_path
-        self._update_window_title()  
+        self._update_window_title()
         return self.save_project()
 
     def save_project(self) -> bool:
@@ -5726,17 +5637,14 @@ class DialogueEditor(QMainWindow):
 
         nodes_key = config.get_project_key("nodes")
         bookmarks_key = config.get_project_key("bookmarks")
-        groups_key = config.get_project_key("visual_groups")
-        project_data = {nodes_key: {}, bookmarks_key: [], groups_key: []}
+        project_data = {nodes_key: {}, bookmarks_key: []}
 
         try:
             logging.info(f"Saving project to: {self.current_project_path}")
 
             for node_id, node_data in self.nodes_data.items():
                 if node_id in self.graphics_nodes:
-                    node_data.pos = self.graphics_nodes[
-                        node_id
-                    ].pos()  
+                    node_data.pos = self.graphics_nodes[node_id].pos()
                 else:
                     logging.warning(
                         f"Node '{node_id}' exists in data but not graphics during save. Position might be stale."
@@ -5754,9 +5662,9 @@ class DialogueEditor(QMainWindow):
             return True
         except Exception as e:
             logging.exception(
-                f"Could not save project to {self.current_project_path}: {e}"
-            )
-            QMessageBox.critical(self, "Save Failed", f"Could not save project:\n{e}")
+                f"Could not save project to {self.current_project_path}: {e}")
+            QMessageBox.critical(self, "Save Failed",
+                                 f"Could not save project:\n{e}")
             return False
 
     def import_from_json(self):
@@ -5768,20 +5676,18 @@ class DialogueEditor(QMainWindow):
                 self,
                 "Unsaved Changes",
                 "Importing will discard current unsaved changes. Continue?",
-                QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Discard
+                | QMessageBox.StandardButton.Cancel,
                 QMessageBox.StandardButton.Cancel,
             )
             if reply == QMessageBox.StandardButton.Cancel:
                 return
 
-        start_dir = (
-            os.path.dirname(self.current_project_path)
-            if self.current_project_path
-            else ""
-        )
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Import JSON File", start_dir, config.GAME_JSON_FILTER
-        )
+        start_dir = (os.path.dirname(self.current_project_path)
+                     if self.current_project_path else "")
+        file_path, _ = QFileDialog.getOpenFileName(self, "Import JSON File",
+                                                   start_dir,
+                                                   config.GAME_JSON_FILTER)
         if not file_path:
             return
 
@@ -5791,9 +5697,8 @@ class DialogueEditor(QMainWindow):
                 loaded_data = json.load(f)
         except Exception as e:
             logging.exception(f"Error reading or parsing JSON file: {e}")
-            QMessageBox.critical(
-                self, "Import Failed", f"Error reading or parsing JSON file:\n{e}"
-            )
+            QMessageBox.critical(self, "Import Failed",
+                                 f"Error reading or parsing JSON file:\n{e}")
             return
 
         if self.scene:
@@ -5802,14 +5707,13 @@ class DialogueEditor(QMainWindow):
         self.nodes_data.clear()
         self.graphics_nodes.clear()
         self.graphics_edges.clear()
-        self.visual_groups.clear()
         self.bookmarks.clear()
         self.clipboard.clear()
         self.start_node_id = None
         self.next_node_id_counter = 1
         self.current_project_path = None
         self.undo_stack.clear()
-        self._mark_unsaved(True)  
+        self._mark_unsaved(True)
         self._update_window_title()
         self.update_bookmark_menu()
 
@@ -5830,18 +5734,19 @@ class DialogueEditor(QMainWindow):
                     "Cannot determine the start node from the JSON structure. Import aborted.",
                 )
                 self.new_file()
-                return  
+                return
 
-            id_map = self._create_nodes_from_import_data(loaded_data, temp_start_id)
+            id_map = self._create_nodes_from_import_data(
+                loaded_data, temp_start_id)
             if not self.nodes_data:
                 raise ValueError("No nodes were created from the import data.")
 
             if not self._set_editor_start_node(temp_start_id):
                 self.new_file()
-                return  
+                return
 
             self._populate_connections_from_import_data(loaded_data, id_map)
-            self._run_auto_layout()  
+            self._run_auto_layout()
 
             logging.info(f"Import complete: {len(self.nodes_data)} nodes.")
             QMessageBox.information(
@@ -5850,19 +5755,20 @@ class DialogueEditor(QMainWindow):
                 f"Successfully imported dialogue from:\n{file_path}",
             )
 
-            self.undo_stack.clear()  
+            self.undo_stack.clear()
             self.undo_stack.setClean()
-            self._mark_unsaved(True)  
-            self.update_properties_panel()  
+            self._mark_unsaved(True)
+            self.update_properties_panel()
 
         except Exception as e:
-            logging.exception(f"An error occurred during the import process: {e}")
+            logging.exception(
+                f"An error occurred during the import process: {e}")
             QMessageBox.critical(
                 self,
                 "Import Error",
                 f"An error occurred during the import process:\n{e}",
             )
-            self.new_file()  
+            self.new_file()
 
     def _determine_start_node_id(self, loaded_data: dict) -> Optional[str]:
         start_wrapper_key = config.get_game_key("start_node_wrapper")
@@ -5881,29 +5787,25 @@ class DialogueEditor(QMainWindow):
                         f"Found start node ID '{temp_start_node_id}' within wrapper '{start_wrapper_key}'."
                     )
                     return str(temp_start_node_id)
-                else:  
+                else:
                     logging.warning(
                         f"Start wrapper '{start_wrapper_key}' exists but missing '{node_id_key}'. Assuming wrapper key IS the start node ID."
                     )
                     temp_start_node_id = start_wrapper_key
 
                     if temp_start_node_id in loaded_data and isinstance(
-                        loaded_data[temp_start_node_id], dict
-                    ):
+                            loaded_data[temp_start_node_id], dict):
                         return str(temp_start_node_id)
                     else:
                         logging.error(
                             f"Start node ID '{temp_start_node_id}' (from wrapper key) does not correspond to a node object in the JSON root."
                         )
                         return None
-            elif isinstance(
-                start_node_content, (str, int, float)
-            ):  
+            elif isinstance(start_node_content, (str, int, float)):
                 temp_start_node_id = str(start_node_content)
 
                 if temp_start_node_id in loaded_data and isinstance(
-                    loaded_data[temp_start_node_id], dict
-                ):
+                        loaded_data[temp_start_node_id], dict):
                     logging.info(
                         f"Found start node ID '{temp_start_node_id}' as value of wrapper key '{start_wrapper_key}'."
                     )
@@ -5917,14 +5819,12 @@ class DialogueEditor(QMainWindow):
         if start_wrapper_key:
             for key, content in loaded_data.items():
                 if key == start_wrapper_key:
-                    continue  
+                    continue
                 if isinstance(content, dict):
                     node_id_in_content = content.get(node_id_key)
 
-                    if (
-                        node_id_in_content
-                        and str(node_id_in_content) == start_wrapper_key
-                    ):
+                    if (node_id_in_content
+                            and str(node_id_in_content) == start_wrapper_key):
                         logging.info(
                             f"Found node '{key}' whose ID field ('{node_id_in_content}') matches start wrapper key '{start_wrapper_key}'. Using it as start."
                         )
@@ -5932,9 +5832,7 @@ class DialogueEditor(QMainWindow):
 
         if loaded_data:
             first_key = next(iter(loaded_data))
-            if (
-                first_key == start_wrapper_key
-            ):  
+            if first_key == start_wrapper_key:
                 if len(loaded_data) > 1:
                     first_key = list(loaded_data.keys())[1]
                 else:
@@ -5963,9 +5861,9 @@ class DialogueEditor(QMainWindow):
         return None
 
     def _create_nodes_from_import_data(
-        self, loaded_data: Dict[str, Any], determined_start_id: str
-    ) -> Dict[str, str]:
-        id_map: Dict[str, str] = {}  
+            self, loaded_data: Dict[str, Any],
+            determined_start_id: str) -> Dict[str, str]:
+        id_map: Dict[str, str] = {}
         processed_ids: Set[str] = set()
         errors: List[str] = []
         node_id_key = config.get_game_key("node_id")
@@ -5976,11 +5874,9 @@ class DialogueEditor(QMainWindow):
         def process_node(key_in_json: str, content: Dict[str, Any]):
             nonlocal processed_ids, id_map, errors
             if not isinstance(content, dict):
-                return  
+                return
 
-            actual_id_str = str(
-                content.get(node_id_key, key_in_json)
-            )  
+            actual_id_str = str(content.get(node_id_key, key_in_json))
             if not actual_id_str:
                 errors.append(
                     f"Entry with key '{key_in_json}' is missing a valid node ID (using key '{node_id_key}'). Skipping."
@@ -6005,15 +5901,15 @@ class DialogueEditor(QMainWindow):
                     logging.warning(
                         f"Custom data wrapper '{custom_data_wrapper_key}' for node '{actual_id_str}' is not a dictionary. Ignoring."
                     )
-            elif not custom_data_wrapper_key:  
+            elif not custom_data_wrapper_key:
                 for internal_key in config.ALLOWED_CUSTOM_PROPERTIES.keys():
                     game_key_for_prop = config.get_game_key(internal_key)
                     if game_key_for_prop and game_key_for_prop in content:
-                        custom_dict_from_json[internal_key] = content[game_key_for_prop]
-                    elif (
-                        internal_key in content
-                    ):  
-                        custom_dict_from_json[internal_key] = content[internal_key]
+                        custom_dict_from_json[internal_key] = content[
+                            game_key_for_prop]
+                    elif internal_key in content:
+                        custom_dict_from_json[internal_key] = content[
+                            internal_key]
 
             try:
                 node_data = DialogueNodeData(
@@ -6021,20 +5917,19 @@ class DialogueEditor(QMainWindow):
                     character=char,
                     text=text,
                     is_start=is_start,
-                    pos=QPointF(
-                        50, 50 + len(processed_ids) * 20
-                    ),  
+                    pos=QPointF(50, 50 + len(processed_ids) * 20),
                     custom_data=custom_dict_from_json,
                 )
                 if self._add_node_internal(node_data):
                     processed_ids.add(actual_id_str)
-                    id_map[actual_id_str] = key_in_json  
+                    id_map[actual_id_str] = key_in_json
                 else:
                     raise ValueError("Internal node addition failed.")
             except Exception as e:
                 error_msg = f"Key '{key_in_json}' (ID: '{actual_id_str}'): {e}"
                 errors.append(error_msg)
-                logging.exception(f"Error creating node from import: {error_msg}")
+                logging.exception(
+                    f"Error creating node from import: {error_msg}")
 
         start_wrapper_key = config.get_game_key("start_node_wrapper")
 
@@ -6048,7 +5943,7 @@ class DialogueEditor(QMainWindow):
                             f"Processing start node '{determined_start_id}' from within wrapper '{start_wrapper_key}'."
                         )
                         process_node(start_wrapper_key, start_content)
-                else:  
+                else:
                     logging.warning(
                         f"Start wrapper key '{start_wrapper_key}' contained node with ID '{start_node_id_in_wrapper}', but determined start was '{determined_start_id}'. Processing wrapper content as regular node '{start_wrapper_key}'."
                     )
@@ -6056,26 +5951,25 @@ class DialogueEditor(QMainWindow):
 
         for k, v in loaded_data.items():
             if k == start_wrapper_key:
-                continue  
+                continue
             if isinstance(v, dict):
                 node_id_val = str(v.get(node_id_key, k))
-                if (
-                    node_id_val not in processed_ids
-                ):  
+                if node_id_val not in processed_ids:
                     process_node(k, v)
 
         if errors:
             QMessageBox.warning(
                 self,
                 "Import Node Errors",
-                f"Errors occurred during node creation from JSON:\n- "
-                + "\n- ".join(errors),
+                f"Errors occurred during node creation from JSON:\n- " +
+                "\n- ".join(errors),
             )
         return id_map
 
     def _set_editor_start_node(self, start_node_id: str) -> bool:
         if not start_node_id:
-            logging.error("Start node ID provided to _set_editor_start_node was empty.")
+            logging.error(
+                "Start node ID provided to _set_editor_start_node was empty.")
             QMessageBox.critical(
                 self,
                 "Import Error",
@@ -6097,7 +5991,7 @@ class DialogueEditor(QMainWindow):
                     f"Internal function failed to set start node to '{start_node_id}'.",
                 )
                 return False
-        elif not self.nodes_data:  
+        elif not self.nodes_data:
             logging.error(
                 "Cannot set start node: No valid node data was created during import."
             )
@@ -6107,7 +6001,7 @@ class DialogueEditor(QMainWindow):
                 "Cannot set start node because no valid node data was created during import.",
             )
             return False
-        else:  
+        else:
             logging.error(
                 f"Determined start node ID '{start_node_id}' exists in data but not in graphics_nodes."
             )
@@ -6121,9 +6015,9 @@ class DialogueEditor(QMainWindow):
             )
             return False
 
-    def _populate_connections_from_import_data(
-        self, loaded_data: Dict[str, Any], id_to_key_map: Dict[str, str]
-    ):
+    def _populate_connections_from_import_data(self, loaded_data: Dict[str,
+                                                                       Any],
+                                               id_to_key_map: Dict[str, str]):
         errors: List[str] = []
         logging.info("Populating node connections from imported JSON...")
 
@@ -6140,22 +6034,14 @@ class DialogueEditor(QMainWindow):
             orig_key = id_to_key_map.get(node_id)
             content: Optional[Dict] = None
 
-            if (
-                orig_key
-                and orig_key in loaded_data
-                and isinstance(loaded_data[orig_key], dict)
-            ):
+            if (orig_key and orig_key in loaded_data
+                    and isinstance(loaded_data[orig_key], dict)):
                 content = loaded_data[orig_key]
-            elif (
-                node_id == self.start_node_id
-                and start_wrap_k
-                and start_wrap_k in loaded_data
-            ):  
+            elif (node_id == self.start_node_id and start_wrap_k
+                  and start_wrap_k in loaded_data):
                 wrap_content = loaded_data[start_wrap_k]
-                if (
-                    isinstance(wrap_content, dict)
-                    and str(wrap_content.get(node_id_k)) == node_id
-                ):
+                if (isinstance(wrap_content, dict)
+                        and str(wrap_content.get(node_id_k)) == node_id):
                     content = wrap_content
 
             if not content:
@@ -6164,20 +6050,20 @@ class DialogueEditor(QMainWindow):
                 )
                 continue
 
-            target_node_data.next_node = None  
+            target_node_data.next_node = None
             target_node_data.choices = []
 
             if next_k and next_k in content:
                 next_id_val = content[next_k]
-                if isinstance(next_id_val, (str, int, float)) and str(next_id_val):
+                if isinstance(next_id_val,
+                              (str, int, float)) and str(next_id_val):
                     next_id_str = str(next_id_val)
                     if next_id_str in self.nodes_data:
                         target_node_data.next_node = next_id_str
-                        target_node_data.choices = []  
+                        target_node_data.choices = []
                         logging.debug(
-                            f"  Node '{node_id}': Set next -> '{next_id_str}'"
-                        )
-                        continue  
+                            f"  Node '{node_id}': Set next -> '{next_id_str}'")
+                        continue
                     else:
                         errors.append(
                             f"Node '{node_id}': Target '{next_id_str}' for '{next_k}' key does not exist."
@@ -6187,13 +6073,11 @@ class DialogueEditor(QMainWindow):
                         f"Node '{node_id}': Invalid type '{type(next_id_val)}' for '{next_k}' key."
                     )
 
-            elif (
-                choices_k
-                and choices_k in content
-                and isinstance(content[choices_k], list)
-            ):
+            elif (choices_k and choices_k in content
+                  and isinstance(content[choices_k], list)):
                 valid_choices_added = False
-                logging.debug(f"  Node '{node_id}': Processing choices list...")
+                logging.debug(
+                    f"  Node '{node_id}': Processing choices list...")
                 for i, choice_obj in enumerate(content[choices_k]):
                     if isinstance(choice_obj, dict):
                         ct = choice_obj.get(ctext_k)
@@ -6227,16 +6111,16 @@ class DialogueEditor(QMainWindow):
                             preset_icon = preset_data.get("icon")
                             preset_sound = preset_data.get("sound")
 
-                            icon_match = (preset_icon is None) or (icon == preset_icon)
-                            sound_match = (preset_sound is None) or (
-                                sound == preset_sound
-                            )
+                            icon_match = (preset_icon
+                                          is None) or (icon == preset_icon)
+                            sound_match = (preset_sound
+                                           is None) or (sound == preset_sound)
                             if icon_match and sound_match:
-
                                 if preset_icon or preset_sound:
                                     preset_name = name
-                                    break  
-                        target_node_data.choices.append((ct_str, cn_str, preset_name))
+                                    break
+                        target_node_data.choices.append(
+                            (ct_str, cn_str, preset_name))
                         valid_choices_added = True
                         logging.debug(
                             f"    Added choice: '{ct_str}' -> '{cn_str}' (Preset: {preset_name})"
@@ -6247,16 +6131,14 @@ class DialogueEditor(QMainWindow):
                         )
 
                 if valid_choices_added:
-                    target_node_data.next_node = (
-                        None  
-                    )
+                    target_node_data.next_node = None
 
         if errors:
             QMessageBox.warning(
                 self,
                 "Import Connection Errors",
-                f"Issues found while connecting nodes from JSON:\n- "
-                + "\n- ".join(errors),
+                f"Issues found while connecting nodes from JSON:\n- " +
+                "\n- ".join(errors),
             )
 
     def export_to_json(self):
@@ -6264,7 +6146,8 @@ class DialogueEditor(QMainWindow):
         self._push_char_edit_command()
         self._check_pending_custom_prop_changes()
         if not self.nodes_data:
-            QMessageBox.warning(self, "Export Error", "There are no nodes to export.")
+            QMessageBox.warning(self, "Export Error",
+                                "There are no nodes to export.")
             return
         if not self.start_node_id or self.start_node_id not in self.nodes_data:
             QMessageBox.warning(
@@ -6280,11 +6163,8 @@ class DialogueEditor(QMainWindow):
             return
 
         default_name = f"{final_export_start_id}_dialogue.json"
-        start_dir = (
-            os.path.dirname(self.current_project_path)
-            if self.current_project_path
-            else ""
-        )
+        start_dir = (os.path.dirname(self.current_project_path)
+                     if self.current_project_path else "")
         fpath, _ = QFileDialog.getSaveFileName(
             self,
             "Export JSON",
@@ -6298,8 +6178,8 @@ class DialogueEditor(QMainWindow):
         output_dict = self._build_export_dict(final_export_start_id)
         if not output_dict:
             QMessageBox.critical(
-                self, "Export Failed", "Failed to build the dictionary for JSON export."
-            )
+                self, "Export Failed",
+                "Failed to build the dictionary for JSON export.")
             return
 
         try:
@@ -6312,7 +6192,8 @@ class DialogueEditor(QMainWindow):
                 f"Dialogue successfully exported to:\n{fpath}",
             )
         except Exception as e:
-            logging.exception(f"An error occurred while writing the JSON file: {e}")
+            logging.exception(
+                f"An error occurred while writing the JSON file: {e}")
             QMessageBox.critical(
                 self,
                 "Export Failed",
@@ -6324,10 +6205,11 @@ class DialogueEditor(QMainWindow):
         target_id = config.START_NODE_EXPORT_ID
 
         if not current_start_id:
-            logging.error("Cannot ensure start node for export: No start node set.")
+            logging.error(
+                "Cannot ensure start node for export: No start node set.")
             return None
         if current_start_id == target_id:
-            return target_id  
+            return target_id
 
         gnode = self.graphics_nodes.get(current_start_id)
         if not gnode:
@@ -6341,10 +6223,8 @@ class DialogueEditor(QMainWindow):
             )
             return None
 
-        if (
-            target_id in self.nodes_data
-            and self.nodes_data[target_id] != gnode.node_data
-        ):
+        if (target_id in self.nodes_data
+                and self.nodes_data[target_id] != gnode.node_data):
             logging.error(
                 f"Export Error: Cannot rename start node '{current_start_id}' to '{target_id}' due to ID conflict."
             )
@@ -6371,7 +6251,8 @@ class DialogueEditor(QMainWindow):
             self.undo_stack.push(cmd)
 
             if self.start_node_id == target_id:
-                logging.info(f"Renamed start node to '{target_id}' successfully.")
+                logging.info(
+                    f"Renamed start node to '{target_id}' successfully.")
                 return target_id
             else:
                 logging.error(
@@ -6395,8 +6276,7 @@ class DialogueEditor(QMainWindow):
             return current_start_id
 
     def _build_export_dict(
-        self, final_export_start_id: str
-    ) -> Optional[Dict[str, Any]]:
+            self, final_export_start_id: str) -> Optional[Dict[str, Any]]:
         output_nodes: Dict[str, Dict] = {}
         start_entry: Optional[Dict] = None
         errors: List[str] = []
@@ -6407,7 +6287,6 @@ class DialogueEditor(QMainWindow):
 
         try:
             for node_id, data in self.nodes_data.items():
-
                 if node_id in self.graphics_nodes:
                     data.pos = self.graphics_nodes[node_id].pos()
 
@@ -6502,20 +6381,13 @@ class DialogueEditor(QMainWindow):
                 props_to_export: Dict[str, Any] = {}
                 if isinstance(data.custom_data, dict):
                     for internal_key, value in data.custom_data.items():
-                        if (
-                            internal_key in config.ALLOWED_CUSTOM_PROPERTIES
-                            and value is not None
-                        ):
-
-                            game_key_for_prop = key_map.get(
-                                internal_key
-                            )  
+                        if (internal_key in config.ALLOWED_CUSTOM_PROPERTIES
+                                and value is not None):
+                            game_key_for_prop = key_map.get(internal_key)
                             if game_key_for_prop:
                                 props_to_export[game_key_for_prop] = value
                             elif custom_data_wrapper_key:
-                                props_to_export[internal_key] = (
-                                    value  
-                                )
+                                props_to_export[internal_key] = value
                             else:
                                 errors.append(
                                     f"Node '{node_id}': No game key mapping for custom prop '{internal_key}' and no wrapper. Skipping property."
@@ -6523,7 +6395,7 @@ class DialogueEditor(QMainWindow):
                 if props_to_export:
                     if custom_data_wrapper_key:
                         entry[custom_data_wrapper_key] = props_to_export
-                    else:  
+                    else:
                         for prop_key, prop_value in props_to_export.items():
                             if prop_key in entry:
                                 errors.append(
@@ -6542,9 +6414,7 @@ class DialogueEditor(QMainWindow):
                     f"Start node entry for '{final_export_start_id}' was not created during export build."
                 )
 
-            start_wrapper_key = key_map.get(
-                "start_node_wrapper", "start"
-            )  
+            start_wrapper_key = key_map.get("start_node_wrapper", "start")
             final_output: Dict[str, Any] = {start_wrapper_key: start_entry}
 
             error_node_config = getattr(config, "DEFAULT_ERROR_NODE", None)
@@ -6555,23 +6425,21 @@ class DialogueEditor(QMainWindow):
                 if error_node_id:
                     if error_node_id in output_nodes:
                         final_output[error_wrapper_key] = output_nodes.pop(
-                            error_node_id
-                        )
+                            error_node_id)
                         logging.debug(
                             f"Moved processed node '{error_node_id}' to error wrapper '{error_wrapper_key}'."
                         )
                     elif error_node_id == final_export_start_id:
-                        final_output[error_wrapper_key] = (
-                            start_entry  
-                        )
+                        final_output[error_wrapper_key] = start_entry
                         logging.warning(
                             f"Start node '{error_node_id}' is also designated error node."
                         )
-                    else:  
+                    else:
                         logging.warning(
                             f"Error node '{error_node_id}' not found in dialogue, adding default error node structure."
                         )
-                        final_output[error_wrapper_key] = error_node_config.copy()
+                        final_output[
+                            error_wrapper_key] = error_node_config.copy()
 
             final_output.update(sorted(output_nodes.items()))
 
@@ -6579,8 +6447,8 @@ class DialogueEditor(QMainWindow):
                 QMessageBox.warning(
                     self,
                     "Export Warnings",
-                    f"Potential issues found during export build:\n- "
-                    + "\n- ".join(errors),
+                    f"Potential issues found during export build:\n- " +
+                    "\n- ".join(errors),
                 )
             return final_output
 
@@ -6609,17 +6477,19 @@ class DialogueEditor(QMainWindow):
                 label = f"{node_id}: {node_data.character} - {node_data.text[:20]}..."
                 action = QAction(label, self)
 
-                action.triggered.connect(partial(self.handle_focus_request, node_id))
+                action.triggered.connect(
+                    partial(self.handle_focus_request, node_id))
                 self.bookmarks_menu.addAction(action)
-            else:  
-                logging.warning(f"Stale bookmark found for missing node ID: {node_id}")
+            else:
+                logging.warning(
+                    f"Stale bookmark found for missing node ID: {node_id}")
 
     def update_dynamic_node_visuals(self, node_id: Optional[str] = None):
         """Updates visuals like bookmark status and color rules for one or all nodes."""
         nodes_to_update = []
         if node_id and node_id in self.graphics_nodes:
             nodes_to_update.append(self.graphics_nodes[node_id])
-        elif node_id is None:  
+        elif node_id is None:
             nodes_to_update = list(self.graphics_nodes.values())
 
         for gnode in nodes_to_update:
@@ -6627,7 +6497,7 @@ class DialogueEditor(QMainWindow):
                 gnode.update_dynamic_visuals()
 
     def update_all_dynamic_node_visuals(self):
-        self.update_dynamic_node_visuals(None)  
+        self.update_dynamic_node_visuals(None)
 
     def copy_selected_nodes(self):
         selected_nodes = self.get_selected_nodes()
@@ -6637,9 +6507,9 @@ class DialogueEditor(QMainWindow):
         self.clipboard.clear()
         for node in selected_nodes:
             if hasattr(node, "node_data"):
-
                 self.clipboard.append(copy.deepcopy(node.node_data.to_dict()))
-        self.statusBar().showMessage(f"Copied {len(self.clipboard)} node(s).", 2000)
+        self.statusBar().showMessage(f"Copied {len(self.clipboard)} node(s).",
+                                     2000)
 
     def has_clipboard_data(self) -> bool:
         return bool(self.clipboard)
@@ -6652,11 +6522,9 @@ class DialogueEditor(QMainWindow):
         self._check_pending_custom_prop_changes()
 
         if paste_center_pos is None:
-            paste_center_pos = (
-                self.view.mapToScene(self.view.viewport().rect().center())
-                if self.view
-                else QPointF(100, 100)
-            )
+            paste_center_pos = (self.view.mapToScene(
+                self.view.viewport().rect().center())
+                                if self.view else QPointF(100, 100))
 
         self.undo_stack.beginMacro(f"Paste {len(self.clipboard)} Node(s)")
         try:
@@ -6672,64 +6540,54 @@ class DialogueEditor(QMainWindow):
             if num_nodes > 0:
                 avg_original_x /= num_nodes
                 avg_original_y /= num_nodes
-            else:  
+            else:
                 avg_original_x = paste_center_pos.x() - config.NODE_WIDTH / 2
                 avg_original_y = paste_center_pos.y() - config.NODE_HEIGHT / 2
 
-            offset_x = (
-                paste_center_pos.x()
-                - avg_original_x
-                - (config.NODE_WIDTH / 2 if num_nodes > 0 else 0)
-            )
-            offset_y = (
-                paste_center_pos.y()
-                - avg_original_y
-                - (config.NODE_HEIGHT / 2 if num_nodes > 0 else 0)
-            )
+            offset_x = (paste_center_pos.x() - avg_original_x -
+                        (config.NODE_WIDTH / 2 if num_nodes > 0 else 0))
+            offset_y = (paste_center_pos.y() - avg_original_y -
+                        (config.NODE_HEIGHT / 2 if num_nodes > 0 else 0))
             if num_nodes <= 1:
-                offset_y += (
-                    config.DEFAULT_PASTE_OFFSET.y()
-                )  
+                offset_y += config.DEFAULT_PASTE_OFFSET.y()
 
-            pasted_ids_map = {}  
+            pasted_ids_map = {}
 
             for i, node_data_dict in enumerate(self.clipboard):
                 original_id = node_data_dict.get(config.get_project_key("id"))
                 new_id = self._get_unique_node_id(
-                    base=f"{original_id}_copy_" if original_id else "pasted_node_"
-                )
+                    base=f"{original_id}_copy_"
+                    if original_id else "pasted_node_")
 
                 node_data_dict[config.get_project_key("id")] = new_id
-                node_data_dict[config.get_project_key("is_start_node")] = (
-                    False  
-                )
+                node_data_dict[config.get_project_key("is_start_node")] = False
 
                 pos_list = node_data_dict.get(config.get_project_key("pos"))
                 if isinstance(pos_list, list) and len(pos_list) == 2:
                     new_x = pos_list[0] + offset_x
                     new_y = pos_list[1] + offset_y
-                    node_data_dict[config.get_project_key("pos")] = [new_x, new_y]
-                else:  
                     node_data_dict[config.get_project_key("pos")] = [
-                        paste_center_pos.x() - config.NODE_WIDTH / 2 + (i * 10),
-                        paste_center_pos.y()
-                        - config.NODE_HEIGHT / 2
-                        + (i * 10)
-                        + config.DEFAULT_PASTE_OFFSET.y(),
+                        new_x, new_y
+                    ]
+                else:
+                    node_data_dict[config.get_project_key("pos")] = [
+                        paste_center_pos.x() - config.NODE_WIDTH / 2 +
+                        (i * 10),
+                        paste_center_pos.y() - config.NODE_HEIGHT / 2 +
+                        (i * 10) + config.DEFAULT_PASTE_OFFSET.y(),
                     ]
 
                 node_data_dict.pop(config.get_project_key("next_node"), None)
                 node_data_dict.pop(config.get_project_key("choices"), None)
 
                 try:
-                    new_node_data_obj = DialogueNodeData.from_dict(node_data_dict)
+                    new_node_data_obj = DialogueNodeData.from_dict(
+                        node_data_dict)
 
                     cmd = AddNodeCommand(new_node_data_obj, self)
-                    self.undo_stack.push(cmd)  
+                    self.undo_stack.push(cmd)
                     if original_id:
-                        pasted_ids_map[original_id] = (
-                            new_id  
-                        )
+                        pasted_ids_map[original_id] = new_id
                 except Exception as e:
                     logging.error(
                         f"Error creating pasted node from data {node_data_dict}: {e}"
@@ -6739,14 +6597,14 @@ class DialogueEditor(QMainWindow):
                         "Paste Error",
                         f"Failed to create pasted node for original ID '{original_id}'.",
                     )
-                    self.undo_stack.endMacro()  
+                    self.undo_stack.endMacro()
                     return
 
         except Exception as e:
             logging.exception(f"Error during node pasting process: {e}")
             QMessageBox.critical(
-                self, "Paste Failed", f"An unexpected error occurred during paste:\n{e}"
-            )
+                self, "Paste Failed",
+                f"An unexpected error occurred during paste:\n{e}")
         finally:
             self.undo_stack.endMacro()
 
@@ -6759,7 +6617,8 @@ class DialogueEditor(QMainWindow):
         visited_nodes = {start_node_id}
         highlighted_edges = set()
 
-        adj = self.get_graph_adjacency(incoming=incoming, exclude_start_loops=True)
+        adj = self.get_graph_adjacency(incoming=incoming,
+                                       exclude_start_loops=True)
 
         start_gnode = self.graphics_nodes.get(start_node_id)
         if start_gnode:
@@ -6804,7 +6663,7 @@ class DialogueEditor(QMainWindow):
             if selected_node:
                 node_id = selected_node.node_data.id
             else:
-                return  
+                return
         logging.info(f"Highlighting outgoing path from: {node_id}")
         self.highlight_path(node_id, incoming=False)
 
@@ -6834,31 +6693,27 @@ class DialogueEditor(QMainWindow):
         self._find_type = ""
 
     def get_graph_adjacency(
-        self, incoming: bool = False, exclude_start_loops: bool = False
-    ) -> Dict[str, List[str]]:
+            self,
+            incoming: bool = False,
+            exclude_start_loops: bool = False) -> Dict[str, List[str]]:
         adj = defaultdict(list)
-        start_id = self.start_node_id  
+        start_id = self.start_node_id
 
         for node_id, node_data in self.nodes_data.items():
             targets = []
 
             if node_data.next_node and node_data.next_node in self.nodes_data:
-
                 if not exclude_start_loops or node_data.next_node != start_id:
                     targets.append(node_data.next_node)
             elif node_data.choices:
                 for _, target_id, _ in node_data.choices:
                     if target_id in self.nodes_data:
-
                         if not exclude_start_loops or target_id != start_id:
                             targets.append(target_id)
 
-            if (
-                not targets
-                and node_id != start_id
-                and start_id in self.nodes_data
-                and not exclude_start_loops
-            ):
+            if (not targets and node_id != start_id
+                    and start_id in self.nodes_data
+                    and not exclude_start_loops):
                 targets.append(start_id)
 
             for target_id in targets:
@@ -6870,7 +6725,7 @@ class DialogueEditor(QMainWindow):
         return adj
 
     def validate_dialogue(self):
-        results: List[Tuple[str, str, Optional[str]]] = []  
+        results: List[Tuple[str, str, Optional[str]]] = []
         start_id = self.start_node_id
 
         if not start_id or start_id not in self.nodes_data:
@@ -6893,92 +6748,85 @@ class DialogueEditor(QMainWindow):
             if config.VALIDATOR_CHECK_ORPHANS:
                 orphans = all_node_ids - reachable_nodes
                 for orphan_id in sorted(list(orphans)):
-                    results.append(
-                        (
-                            "WARNING",
-                            f"Node is unreachable from the start node ('{start_id}').",
-                            orphan_id,
-                        )
-                    )
+                    results.append((
+                        "WARNING",
+                        f"Node is unreachable from the start node ('{start_id}').",
+                        orphan_id,
+                    ))
 
         for node_id, node_data in self.nodes_data.items():
             has_outgoing = False
 
             if node_data.next_node:
-                if (
-                    config.VALIDATOR_CHECK_DANGLING_LINKS
-                    and node_data.next_node not in all_node_ids
-                ):
-                    results.append(
-                        (
-                            "ERROR",
-                            f"Links to non-existent node ID '{node_data.next_node}' via 'Next'.",
-                            node_id,
-                        )
-                    )
+                if (config.VALIDATOR_CHECK_DANGLING_LINKS
+                        and node_data.next_node not in all_node_ids):
+                    results.append((
+                        "ERROR",
+                        f"Links to non-existent node ID '{node_data.next_node}' via 'Next'.",
+                        node_id,
+                    ))
                 else:
                     has_outgoing = True
 
             elif node_data.choices:
-                has_outgoing = (
-                    True  
-                )
-                for i, (text, target_id, preset) in enumerate(node_data.choices):
-                    if (
-                        config.VALIDATOR_CHECK_DANGLING_LINKS
-                        and target_id not in all_node_ids
-                    ):
-                        results.append(
-                            (
-                                "ERROR",
-                                f"Choice {i+1} ('{text[:20]}...') links to non-existent node ID '{target_id}'.",
-                                node_id,
-                            )
-                        )
-                        has_outgoing = False  
+                has_outgoing = True
+                for i, (text, target_id,
+                        preset) in enumerate(node_data.choices):
+                    if (config.VALIDATOR_CHECK_DANGLING_LINKS
+                            and target_id not in all_node_ids):
+                        results.append((
+                            "ERROR",
+                            f"Choice {i + 1} ('{text[:20]}...') links to non-existent node ID '{target_id}'.",
+                            node_id,
+                        ))
+                        has_outgoing = False
 
             if config.VALIDATOR_CHECK_DEAD_ENDS and not has_outgoing:
                 is_looping_to_start = False
-                if (
-                    node_id != start_id and start_id in all_node_ids
-                ):  
+                if node_id != start_id and start_id in all_node_ids:
                     is_looping_to_start = True
 
                 if not is_looping_to_start:
-                    results.append(
-                        (
-                            "WARNING",
-                            "Node has no outgoing connections (potential dead end).",
-                            node_id,
-                        )
-                    )
+                    results.append((
+                        "WARNING",
+                        "Node has no outgoing connections (potential dead end).",
+                        node_id,
+                    ))
 
-            if config.VALIDATOR_CHECK_MISSING_TEXT and not node_data.text.strip():
-                results.append(("WARNING", "Node text is empty.", node_id))
-            if (
-                config.VALIDATOR_CHECK_MISSING_CHARACTER
-                and not node_data.character.strip()
+            if config.VALIDATOR_CHECK_MISSING_TEXT and not node_data.text.strip(
             ):
-                results.append(("WARNING", "Node character is empty.", node_id))
+                results.append(("WARNING", "Node text is empty.", node_id))
+            if (config.VALIDATOR_CHECK_MISSING_CHARACTER
+                    and not node_data.character.strip()):
+                results.append(
+                    ("WARNING", "Node character is empty.", node_id))
 
         if not results:
-            QMessageBox.information(self, "Validation Complete", "No issues found.")
+            QMessageBox.information(self, "Validation Complete",
+                                    "No issues found.")
         else:
             dialog = ValidationResultsDialog(results, self)
-            dialog.focusRequested.connect(self.handle_focus_request)  
+            dialog.focusRequested.connect(self.handle_focus_request)
             dialog.exec()
+
+    def toggle_bookmark_cmd(self, node_id: str):
+        if node_id not in self.nodes_data:
+            logging.warning(
+                f"Cannot toggle bookmark for non-existent node '{node_id}'")
+            return
+        cmd = ToggleBookmarkCommand(node_id, self)
+        self.undo_stack.push(cmd)
+
 
 if __name__ == "__main__":
     try:
         if hasattr(Qt.ApplicationAttribute, "AA_EnableHighDpiScaling"):
             QApplication.setAttribute(
-                Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True
-            )
+                Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
             logging.info("High DPI Scaling enabled.")
         if hasattr(Qt.ApplicationAttribute, "AA_UseHighDpiPixmaps"):
             QApplication.setAttribute(
-                Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True
-            )
+                Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
             logging.info("High DPI Pixmaps enabled.")
     except Exception as e:
         logging.warning(f"Could not set High DPI attributes: {e}")
@@ -7000,14 +6848,15 @@ if __name__ == "__main__":
     editor.show()
 
     if not editor.nodes_data:
-        logging.info("No nodes found on startup. Creating default 'start' node.")
+        logging.info(
+            "No nodes found on startup. Creating default 'start' node.")
         editor.add_node_cmd(
             node_id=config.START_NODE_EXPORT_ID,
             character="Narrator",
             text="Start here.",
             pos=QPointF(50, 50),
         )
-        editor.undo_stack.clear()  
-        editor._mark_unsaved(False)  
+        editor.undo_stack.clear()
+        editor._mark_unsaved(False)
 
     sys.exit(app.exec())
